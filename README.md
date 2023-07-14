@@ -120,3 +120,36 @@ Latency and cost requirements for serving systems need to be accounted for. A se
 Replicating all capabilities of CM3Leon is a substantial engineering effort, requiring expertise in large-scale deep learning, data engineering, and infrastructure optimization. The key factors are assembling a large and diverse training dataset, efficient distributed training framework, mixture of pretraining and finetuning objectives, and optimizations for low-latency inference. With sufficient resources and a capable team, the results of the paper can be replicated.
 
 This analysis covers the major technical components and challenges involved in reimplementing CM3Leon. Please let me know if I got anything wrong.
+
+
+
+----
+The paper does not explicitly mention which retrieval store or index is used for the dense retriever in CM3Leon. 
+
+However, based on the description in the paper, it likely uses a standard dense vector index and maximum inner product search (MIPS) for efficient retrieval, similar to tools like FAISS or Annoy.
+
+Specifically, the paper states:
+
+- They use a bi-encoder dense retriever based on CLIP to encode text and images into dense vectors.
+
+- The text and image embeddings are indexed in a memory bank.
+
+- At training time, relevance scores are computed between the query and documents in the bank using maximum inner product search.
+
+- The topmost relevant documents are retrieved for augmentation.
+
+This setup is very common in dense retrieval systems where the index serves as a high-performance nearest neighbor search for vectors.
+
+Some potential options for the retrieval store include:
+
+- FAISS - Open source library from Facebook for efficient similarity search over float vectors. Supports various index structures and distance measures.
+
+- Annoy - Approximate nearest neighbor search library with support for angular distance metrics. Can be used to index CLIP embeddings.
+
+- Milvus - Open source vector database optimized for MIPS queries over huge datasets.
+
+- Pinecone - Managed vector database with API for text and image search
+
+Since the model was likely trained at Facebook, it's reasonable to assume they used an internally developed index or a highly optimized version of FAISS. But any dense vector index with MIPS support can replicate the retrieval functionality.
+
+The paper does not go into these engineering details but a standard dense vector index is sufficient to implement the retrieval augmented training process.
