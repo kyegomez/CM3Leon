@@ -95,3 +95,52 @@ If you encounter any issues or need further clarification, please create an issu
 
 CM3Leon is open-sourced under the [MIT license](LICENSE).
 
+
+
+# Roadmap
+
+* Implement Objective function where multi-modal inputs are transformed into an infilling instance by masking specific spans and relocating them to the end. 
+
+* Implement a next token prediction loss, -log p(x input) 
+
+* Implement TopP sampling 
+
+* Implement Free Guidance CFG => directing an unconditional sample towards a conditional sample. Replace text with mask token from cm3 objective for uncoditional sampling so that during inference 2 concurrent tokens tsreams are generated a conditional stream, which is contigent on the input text and an unconditional token stream which is conditioned on a mask token Where
+
+``` 
+
+Logits, cond = T(ty | ty), logit.uncond = T(ty | <mask>)
+logits.cf = logits.uncond + a.c * (logits.cond - logits.uncond)
+
+T = transformer
+ty = output tokens
+tx = conditional input text <mask>
+<mask> = no input text + replacement with a mask token
+a.c = scaling factor
+```
+
+* Implement Contrastive Decoding TopK => 
+```
+V(t.y < .i) = {t.yi is in V: P.exp(t.yi | t.y<.i) >= a * kmax(p.exp(w|t.y<i))}
+```
+
+
+## HyperParameters
+```Model size # L dmodel Seq Length Batch LR Warmup Steps # GPUs # Tokens
+350M 24 1024 4096 8M 6e-04 1500 256 1.4T
+760M 24 1536 4096 8M 5e-04 1500 256 1.9T
+7B 32 4096 4096 8M 1.2e-04 1500 512 2.4T
+```
+
+## SuperVised FineTuning parameters
+``` 
+Model # GPUS Seq Length Batch Size LR Warm-up Steps # Tokens
+CM3Leon-760m 64 4096 2M 5e-05 150 30B
+CM3Leon-7b 128 4096 2M 5e-05 150 30B
+```
+
+# Innovations in the paper:
+
+* Conditional text + image generation with objective function + contrastive top k decoding
+
+* Multi-Modality models need to be dynamic they can't just generate the types of data they were trained on they need to be able to adapt to user needs therefore multi-modality models should be conditional, if prompted the model will generate text and or images, this is the future.
