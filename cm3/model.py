@@ -1,4 +1,4 @@
-from CM3LEON.andromeda.model import Andromeda
+from cm3.andromeda.model import Andromeda
 
 # Remaining imports
 import logging
