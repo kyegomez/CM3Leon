@@ -148,7 +148,7 @@ def train(args):
         num_training_steps=args.max_steps,
     )
 
-    # tokenizer = KosmosTokenizer()
+    # tokenizer = CM3LEONTokenizer()
 
     #====================> load data #====================> load data #====================> load data 
 
@@ -264,7 +264,7 @@ def train(args):
                     f"{args.checkpoint_dir}/checkpoint_at_step_{step}/")
                 
                 #save the model weights to s3 
-                save_model_to_s3(model, "kosmostraining", "kosmosv1/checkpoints", step)
+                save_model_to_s3(model, "CM3LEONtraining", "CM3LEONv1/checkpoints", step)
                 print(f"Saved to s3: {save_model_to_s3} ")
 
         #finish tensorboard writer

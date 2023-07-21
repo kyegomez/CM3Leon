@@ -33,7 +33,7 @@ except ImportError as e:
 
 
 # Implement classes with type hints and error handling
-class CM3LEON:
+class CM3LEONTokenizer:
     """
     A tokenizer class for the CM3LEON model
 

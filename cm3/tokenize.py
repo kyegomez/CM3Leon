@@ -3,7 +3,7 @@ import argparse
 from itertools import chain
 from datasets import load_dataset
 from transformers import AutoTokenizer
-from Kosmos.model import KosmosTokenizer
+from cm3.model import CM3LEONTokenizer
 
 class CFG:
     SEED: int = 42
@@ -16,7 +16,7 @@ class CFG:
 #perhaps will need finetuning
 def built_dataset(args):
     # tokenizer = AutoTokenizer.from_pretrained(CFG.TOKENIZER)
-    tokenizer = KosmosTokenizer.tokenize
+    tokenizer = CM3LEONTokenizer.tokenize
     
     train_dataset = load_dataset(CFG.DATASET_NAME, split="train", streaming=True)
 
