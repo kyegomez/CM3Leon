@@ -15,7 +15,7 @@ from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 from flamingo_pytorch import PerceiverResampler
 from PIL import Image
 
-
+from torch.nn import PostionalEmbedding
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -25,9 +25,6 @@ try:
 except ImportError as e:
     logging.error(f"Failed to import module: {e}")
     raise
-
-
-
 
 
 
@@ -162,7 +159,6 @@ class CM3LEON(nn.Module):
             raise
 
         self.embed = bitsandbytes.nn.modules.Embedding(32002, 2048, padding_idx=1)
-        self.embed_positions= PositionalEmbedding(2048, 2048, 1)
 
         self.output_projection = nn.Linear(2048, 32002, bias=False)
         nn.init.normal_(self.output_projection.weight, mean=0, std=2048**-0.5)
