@@ -1,15 +1,13 @@
 import math
 import multiprocessing
 import os
-import collections
 
 from datetime import timedelta
 from functools import partial
 from itertools import chain
 
-import torch
 
-from accelerate import Accelerator, DeepSpeedPlugin
+from accelerate import Accelerator
 from accelerate.utils import InitProcessGroupKwargs
 
 from datasets import concatenate_datasets, load_dataset
@@ -17,7 +15,6 @@ from datasets import concatenate_datasets, load_dataset
 from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
     CheckpointImpl, apply_activation_checkpointing, checkpoint_wrapper)
 
-from torch.optim import AdamW
 from torch.utils.data import DataLoader
 
 from tqdm import tqdm
@@ -26,7 +23,6 @@ from transformers import (AutoTokenizer, default_data_collator,
                           get_cosine_schedule_with_warmup,
                           get_linear_schedule_with_warmup, set_seed)
 
-from datasets import Dataset
 
 # from stable_adamw import StableAdamWUnfused
 # sd
@@ -66,7 +62,7 @@ def fsdp_activation_checkpointing(
     model, accelerator: Accelerator, offload_to_cpu=False
 ):
 
-    accelerator.print(f"Using FSDP activation checkpointing")
+    accelerator.print("Using FSDP activation checkpointing")
 
     # check_fn = lambda submodule: isinstance(submodule, ParallelTransformerBlock)
 
@@ -331,7 +327,7 @@ def TrainAndromeda():
 
     # end training
 
-    accelerator.print(f"Training Finished")
+    accelerator.print("Training Finished")
     accelerator.end_training()
 
     # save final model

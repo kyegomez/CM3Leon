@@ -2,20 +2,15 @@ from cm3.andromeda.model import Andromeda
 
 # Remaining imports
 import logging
-from PIL import Image
 
 import torch
 import torch.nn as nn
-from torch.nn import Embedding, Module
 
-from transformers import T5Tokenizer, CLIPProcessor, CLIPModel, PreTrainedTokenizerFast, AutoTokenizer
-from tokenizers import SentencePieceBPETokenizer
+from transformers import CLIPProcessor, CLIPModel, AutoTokenizer
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 
 from flamingo_pytorch import PerceiverResampler
-from PIL import Image
 
-from torch.nn import PostionalEmbedding
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 

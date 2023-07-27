@@ -1,8 +1,7 @@
-import math
 import torch
 from torch import Tensor
 from torch.optim.optimizer import Optimizer
-from typing import List, Optional
+from typing import List
 
 
 class SophiaG(Optimizer):
@@ -188,14 +187,13 @@ def _single_tensor_sophiag(params: List[Tensor],
         exp_avg.mul_(beta1).add_(grad, alpha=1 - beta1)
         
         if capturable:
-            step = step_t
             step_size = lr 
             step_size_neg = step_size.neg()
 
             ratio = (exp_avg.abs() / (rho * bs * hess + 1e-15)).clamp(None,1)
             param.addcmul_(exp_avg.sign(), ratio, value=step_size_neg)
         else:
-            step = step_t.item()
+            step_t.item()
             step_size_neg = - lr 
             
             ratio = (exp_avg.abs() / (rho * bs * hess + 1e-15)).clamp(None,1)

@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from einops import rearrange, repeat, pack, unpack
+from einops import rearrange
 
 
 from Andromeda.optimus_prime.x_transformers import TransformerWrapper
@@ -219,7 +219,7 @@ class NonAutoregressiveWrapper(nn.Module):
             annealing_scale = steps_until_x0 / self.steps
             temperature = start_temperature * annealing_scale
 
-            probs = (logits / max(temperature, 1e-3)).softmax(dim = -1)
+            (logits / max(temperature, 1e-3)).softmax(dim = -1)
 
             sampled_ids = gumbel_sample(logits, temperature = max(temperature, 1e-3))
 

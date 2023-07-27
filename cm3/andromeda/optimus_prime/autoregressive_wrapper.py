@@ -83,8 +83,6 @@ class AutoregressiveWrapper(nn.Module):
         min_p_ratio = 0.02,
         **kwargs
     ):
-        device = start_tokens.device
-        num_dims = start_tokens.ndim
 
         start_tokens, ps = pack([start_tokens], '* n')
 

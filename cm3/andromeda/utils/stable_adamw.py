@@ -37,9 +37,8 @@ class StableAdamWUnfused(torch.optim.Optimizer):
         super(StableAdamWUnfused, self).__setstate__(state)
 
     def step(self, closure=None):
-        loss = None
         if closure is not None:
-            loss = closure()
+            closure()
 
         for group in self.param_groups:
             lr = group["lr"]

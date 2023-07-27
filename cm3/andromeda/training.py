@@ -15,7 +15,7 @@ from torch.distributed.fsdp import (
 from accelerate import Accelerator
 from accelerate.utils import (DummyOptim, DummyScheduler,
                               InitProcessGroupKwargs)
-from datasets import concatenate_datasets, load_dataset
+from datasets import load_dataset
 from lion_pytorch import Lion
 # from palm_rlhf_pytorch import PaLM
 from torch.nn import LayerNorm
@@ -75,8 +75,9 @@ class TrainAndromeda:
         accelerator: Accelerator = None,
     ):
         if accelerator is not None:
-            accelerator.print(f"Using activation checkpointing")
-        check_fn = lambda submodule: isinstance(submodule, TransformerWrapper)
+            accelerator.print("Using activation checkpointing")
+        def check_fn(submodule):
+            return isinstance(submodule, TransformerWrapper)
         non_reentrant_wrapper = partial(
             checkpoint_wrapper,
             offload_to_cpu=offload_to_cpu,

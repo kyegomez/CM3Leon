@@ -10,12 +10,10 @@ import torch.nn.functional as F
 
 from functools import partial, wraps
 from inspect import isfunction
-from collections import namedtuple
 from dataclasses import dataclass
 from typing import List
 
-from einops import rearrange, repeat, reduce
-from einops.layers.torch import Rearrange
+from einops import rearrange, repeat
 
 from Andromeda.optimus_prime.attend import Attend, Intermediates
 from Andromeda.optimus_prime.autoregressive_wrapper import AutoregressiveWrapper
@@ -488,7 +486,8 @@ class Scale(nn.Module):
 
     def forward(self, x, **kwargs):
         out = self.fn(x, **kwargs)
-        scale_fn = lambda t: t * self.value
+        def scale_fn(t):
+            return t * self.value
 
         if not isinstance(out, tuple):
             return scale_fn(out)
@@ -785,7 +784,6 @@ class Attention(nn.Module):
         if self.qk_norm:
             qk_l2norm = partial(l2norm, groups = self.qk_norm_groups)
             q, k = map(qk_l2norm, (q, k))
-            scale = self.qk_norm_scale
 
             q = q * self.qk_norm_q_scale
             k = k * self.qk_norm_k_scale
@@ -820,7 +818,7 @@ class Attention(nn.Module):
 
         # determine masking
 
-        mask_value = max_neg_value(q)
+        max_neg_value(q)
         masks = []
         final_attn_mask = None
 
@@ -1130,7 +1128,7 @@ class AttentionLayers(nn.Module):
         outer_residual = x
 
         for ind, (layer_type, (norm, block, residual_fn), layer_dropout) in enumerate(zip(self.layer_types, self.layers, self.layer_dropouts)):
-            is_last = ind == (self.layers_length - 1)
+            ind == (self.layers_length - 1)
 
             if self.training and layer_dropout > 0. and random() < layer_dropout:
                 continue
