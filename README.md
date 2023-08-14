@@ -6,6 +6,26 @@ This paper is brought to you by Agora, we're an all-new multi-modality first AI 
 [CM3LEON, PAPER LINK](https://scontent-mia3-1.xx.fbcdn.net/v/t39.2365-6/358725877_789390529544546_1176484804732743296_n.pdf?_nc_cat=108&ccb=1-7&_nc_sid=3c67a6&_nc_ohc=6UJxCrFyo1kAX9m_mgN&_nc_ht=scontent-mia3-1.xx&oh=00_AfCn3KOP3KK1t11Vi957PpcmSINr6LEu1bz9fDXjFfkkLg&oe=64BF3DF2)
 
 
+## Install
+
+```pip3 install cm3```
+
+---
+
+## Usage & Example
+
+To start with CM3Leon in a PyTorch environment:
+
+```python
+import torch
+from cm3.model import CM3
+# Example
+img = torch.randn(1, 3, 256, 256)
+caption_tokens = torch.randint(0, 4)
+
+model = CM3()
+output = model(img, caption_tokens)
+```
 
 This repository hosts the open-source implementation of CM3Leon, a state-of-the-art autoregressive multi-modal model for text and image generation. The model is introduced in the paper "Scaling Autoregressive Multi-Modal Models: Pretraining and Instruction Tuning".
 
