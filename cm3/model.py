@@ -181,34 +181,29 @@ class CM3(Module):
             )
         )
 
-        try:
-            self.Andromeda = Transformer(
-                num_tokens=num_tokens,
-                max_seq_len=max_seq_len,
-                use_abs_pos_emb=use_abs_pos_emb,
-                embedding_provider=embedding_provider,
-                attn_layers=Decoder(
-                    dim=dim,
-                    depth=depth,
-                    dim_head=dim_head,
-                    heads=heads,
-                    alibi_pos_bias=alibi_pos_bias,
-                    alibi_num_heads=alibi_num_heads,
-                    rotary_xpos=rotary_xpos,
-                    attn_flash=attn_flash,
-                    attn_one_kv_head=attn_one_kv_head,
-                    qk_norm=qk_norm,
-                    attn_qk_norm=attn_qk_norm,
-                    attn_qk_norm_dim_scale=attn_qk_norm_dim_scale,
-                    cross_attend=True
-                )
+        self.transformer = Transformer(
+            num_tokens=num_tokens,
+            max_seq_len=max_seq_len,
+            use_abs_pos_emb=use_abs_pos_emb,
+            embedding_provider=embedding_provider,
+            attn_layers=Decoder(
+                dim=dim,
+                depth=depth,
+                dim_head=dim_head,
+                heads=heads,
+                alibi_pos_bias=alibi_pos_bias,
+                alibi_num_heads=alibi_num_heads,
+                rotary_xpos=rotary_xpos,
+                attn_flash=attn_flash,
+                attn_one_kv_head=attn_one_kv_head,
+                qk_norm=qk_norm,
+                attn_qk_norm=attn_qk_norm,
+                attn_qk_norm_dim_scale=attn_qk_norm_dim_scale,
+                cross_attend=True
             )
+        )
 
-            self.decoder = AutoregressiveWrapper(self.Andromeda)
-
-        except Exception as e:
-            print("Failed to initialize Andromeda: ", e)
-            raise
+        self.decoder = AutoregressiveWrapper(self.transformer)
 
     def forward(self, img, text_tokens, **kwargs):
         """
