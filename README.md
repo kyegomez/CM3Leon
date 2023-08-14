@@ -1,7 +1,6 @@
-
 # CM3Leon: Autoregressive Multi-Modal Model for Text and Image Generation
 
-This paper is brought to you by Agora, we're an all-new multi-modality first AI research organization, help us make this model by joining our Discord:
+CM3Leon is a transformer-based autoregressive model designed for multi-modal tasks, specifically text and image generation. The model is trained in two stages, using a large diverse multimodal dataset and augmented retrieval pretraining. It also implements contrastive decoding to enhance the quality of the generated samples.
 
 [CM3LEON, PAPER LINK](https://scontent-mia3-1.xx.fbcdn.net/v/t39.2365-6/358725877_789390529544546_1176484804732743296_n.pdf?_nc_cat=108&ccb=1-7&_nc_sid=3c67a6&_nc_ohc=6UJxCrFyo1kAX9m_mgN&_nc_ht=scontent-mia3-1.xx&oh=00_AfCn3KOP3KK1t11Vi957PpcmSINr6LEu1bz9fDXjFfkkLg&oe=64BF3DF2)
 
@@ -29,9 +28,9 @@ output = model(img, caption_tokens)
 
 This repository hosts the open-source implementation of CM3Leon, a state-of-the-art autoregressive multi-modal model for text and image generation. The model is introduced in the paper "Scaling Autoregressive Multi-Modal Models: Pretraining and Instruction Tuning".
 
-## Overview
+---
 
-CM3Leon is a transformer-based autoregressive model designed for multi-modal tasks, specifically text and image generation. The model is trained in two stages, using a large diverse multimodal dataset and augmented retrieval pretraining. It also implements contrastive decoding to enhance the quality of the generated samples.
+## Overview
 
 Key Features of CM3Leon:
 
