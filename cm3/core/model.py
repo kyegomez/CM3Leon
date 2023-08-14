@@ -1,5 +1,5 @@
 from torch.nn import Module
-from Andromeda.optimus_prime import TransformerWrapper, AutoregressiveWrapper, AndromedaEmbedding, Decoder
+from cm3.core.transformer import Transformer, AutoregressiveWrapper, AndromedaEmbedding, Decoder
 from transformers import AutoTokenizer
 
 class AndromedaTokenizer:
@@ -14,16 +14,26 @@ class AndromedaTokenizer:
 
     def tokenize_texts(self, texts):
         return self.tokenizer(texts, return_tensors='pt', padding=True, truncation=True).input_ids
+    
+    def decode(self, texts):
+        return self.tokenizer.decode(texts)
+    
+    def __len__(self):
+        num_tokens = len(self.tokenizer)
+        return num_tokens
+
 
 
 class Andromeda(Module):
     """
     Andromeda is a transformer-based model architecture. It initializes with 
-    a TransformerWrapper and AutoregressiveWrapper with default or user-specified parameters.
+    a Transformer and AutoregressiveWrapper with default or user-specified parameters.
     """
-    def __init__(self, num_tokens=50304, 
+    def __init__(self, 
+                 num_tokens=50432, 
                  max_seq_len=8192, 
-                 dim=2560, depth=32, 
+                 dim=2560, 
+                 depth=32, 
                  dim_head=128, 
                  heads=24,
                  use_abs_pos_emb=False, 
@@ -31,9 +41,8 @@ class Andromeda(Module):
                  alibi_num_heads=12, 
                  rotary_xpos=True,
                  attn_flash=True, 
-                 deepnorm=True, 
-                 shift_tokens=1, 
-                 attn_one_kv_head=True, 
+                #  shift_tokens=1, 
+                 attn_one_kv_head=True,  # multiquery attention
                  qk_norm=True, 
                  attn_qk_norm=True, 
                  attn_qk_norm_dim_scale=True, 
@@ -63,7 +72,7 @@ class Andromeda(Module):
         super().__init__()
 
         try:
-            self.andromeda = TransformerWrapper(
+            self.Andromeda = Transformer(
                 num_tokens=num_tokens,
                 max_seq_len=max_seq_len,
                 use_abs_pos_emb=use_abs_pos_emb,
@@ -77,8 +86,8 @@ class Andromeda(Module):
                     alibi_num_heads=alibi_num_heads,
                     rotary_xpos=rotary_xpos,
                     attn_flash=attn_flash,
-                    deepnorm=deepnorm,
-                    shift_tokens=shift_tokens,
+                    # deepnorm=deepnorm,
+                    # shift_tokens=shift_tokens,
                     attn_one_kv_head=attn_one_kv_head,
                     qk_norm=qk_norm,
                     attn_qk_norm=attn_qk_norm,
@@ -86,7 +95,7 @@ class Andromeda(Module):
                 )
             )
 
-            self.decoder = AutoregressiveWrapper(self.andromeda)
+            self.decoder = AutoregressiveWrapper(self.Andromeda)
 
         except Exception as e:
             print("Failed to initialize Andromeda: ", e)

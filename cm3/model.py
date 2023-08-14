@@ -1,16 +1,12 @@
-from cm3.andromeda.model import Andromeda
-
-# Remaining imports
 import logging
 
 import torch
 import torch.nn as nn
-
-from transformers import CLIPProcessor, CLIPModel, AutoTokenizer
-from torchvision.transforms import Compose, Resize, ToTensor, Normalize
-
 from flamingo_pytorch import PerceiverResampler
+from torchvision.transforms import Compose, Normalize, Resize, ToTensor
+from transformers import AutoTokenizer, CLIPModel, CLIPProcessor
 
+from cm3.core.model import Andromeda
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 

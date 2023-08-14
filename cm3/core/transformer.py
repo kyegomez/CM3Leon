@@ -1,25 +1,19 @@
-#add ability to choose your own tokenizer, and embedder, and ask what else can be done for production level training
-
-
 import math
-from random import random
-
-import torch
-from torch import nn, einsum, Tensor
-import torch.nn.functional as F
-
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from functools import partial, wraps
 from inspect import isfunction
-from dataclasses import dataclass
+from random import random
 from typing import List
 
+import torch
+import torch.nn.functional as F
+from cm3.core.attend import Attend, Intermediates
+from cm3.core.autoregressive_wrapper import AutoregressiveWrapper
 from einops import rearrange, repeat
+from torch import Tensor, einsum, nn
 
-from Andromeda.optimus_prime.attend import Attend, Intermediates
-from Andromeda.optimus_prime.autoregressive_wrapper import AutoregressiveWrapper
-
-from abc import ABC, abstractmethod
-import bitsandbytes as bnb
+# import bitsandbytes as bnb
 
 # constants
 
@@ -203,11 +197,11 @@ class AndromedaEmbedding(BaseEmbedding):
 
         return embedding
     
-class AndromedaBnBEmbedding(BaseEmbedding):
-    def get_embedding(self, num_tokens: int, dim: int, padding_idx: int = 0) -> bnb.nn.modules:
-        embedding = bnb.nn.modules.Embedding(num_tokens, dim, padding_idx)
+# class AndromedaBnBEmbedding(BaseEmbedding):
+#     def get_embedding(self, num_tokens: int, dim: int, padding_idx: int = 0) -> bnb.nn.modules:
+#         embedding = bnb.nn.modules.Embedding(num_tokens, dim, padding_idx)
 
-        return embedding
+#         return embedding
 
 class TokenEmbedding(nn.Module):
     def __init__(self, dim, num_tokens, embedding_provider: BaseEmbedding, l2norm_embed = False):
@@ -436,10 +430,16 @@ class RotaryEmbedding(nn.Module):
         self,
         dim,
         use_xpos = False,
-        scale_base = 512
+        scale_base = 512,
+        interpolation_factor=1.,
+        base=10000,
+        base_rescale_factor=1.
     ):
         super().__init__()
-        inv_freq = 1. / (10000 ** (torch.arange(0, dim, 2).float() / dim))
+        base *=  base_rescale_factor ** (dim / (dim - 2))
+        
+        inv_freq = 1. / (base ** (torch.arange(0, dim, 2).float() / dim))
+
         self.register_buffer('inv_freq', inv_freq)
 
         if not use_xpos:
@@ -919,7 +919,9 @@ class AttentionLayers(nn.Module):
         rotary_pos_emb = False,
         rotary_emb_dim = None,
         rotary_xpos = False,
+        rotary_interpolation_factor=1.,
         rotary_xpos_scale_base = 512,
+        rotary_base_rescale_factor=1.,
         custom_layers = None,
         sandwich_coef = None,
         par_ratio = None,
@@ -956,7 +958,7 @@ class AttentionLayers(nn.Module):
         rotary_emb_dim = max(default(rotary_emb_dim, dim_head // 2), 32)
 
         assert not (rotary_xpos and not causal), 'rotary xpos is not compatible with bidirectional attention'
-        self.rotary_pos_emb = RotaryEmbedding(rotary_emb_dim, use_xpos = rotary_xpos, scale_base = rotary_xpos_scale_base) if rotary_pos_emb else None
+        self.rotary_pos_emb = RotaryEmbedding(rotary_emb_dim, use_xpos = rotary_xpos, scale_base = rotary_xpos_scale_base, interpolation_factor=rotary_interpolation_factor, base_rescale_factor=rotary_base_rescale_factor) if rotary_pos_emb else None
 
         assert not (alibi_pos_bias and rel_pos_bias), 'you can only choose Alibi positional bias or T5 relative positional bias, not both'
         assert rel_pos_num_buckets <= rel_pos_max_distance, 'number of relative position buckets must be less than the relative position max distance'
@@ -1188,83 +1190,15 @@ class AttentionLayers(nn.Module):
 
         return x
 
-class Encoder(AttentionLayers):
-    def __init__(self, **kwargs):
-        assert 'causal' not in kwargs, 'cannot set causality on encoder'
-        super().__init__(causal = False, **kwargs)
 
 class Decoder(AttentionLayers):
     def __init__(self, **kwargs):
         assert 'causal' not in kwargs, 'cannot set causality on decoder'
         super().__init__(causal = True, **kwargs)
 
-class CrossAttender(AttentionLayers):
-    def __init__(self, **kwargs):
-        super().__init__(cross_attend = True, only_cross = True, **kwargs)
 
-class ViTransformerWrapper(nn.Module):
-    def __init__(
-        self,
-        *,
-        image_size,
-        patch_size,
-        attn_layers,
-        channels = 3,
-        num_classes = None,
-        dropout = 0.,
-        post_emb_norm = False,
-        emb_dropout = 0.
-    ):
-        super().__init__()
-        assert isinstance(attn_layers, Encoder), 'attention layers must be an Encoder'
-        assert image_size % patch_size == 0, 'image dimensions must be divisible by the patch size'
-        dim = attn_layers.dim
-        num_patches = (image_size // patch_size) ** 2
-        patch_dim = channels * patch_size ** 2
 
-        self.patch_size = patch_size
-
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
-
-        self.patch_to_embedding = nn.Sequential(
-            nn.LayerNorm(patch_dim),
-            nn.Linear(patch_dim, dim),
-            nn.LayerNorm(dim)
-        )
-
-        self.post_emb_norm = nn.LayerNorm(dim) if post_emb_norm else nn.Identity()
-        self.dropout = nn.Dropout(emb_dropout)
-
-        self.attn_layers = attn_layers
-        self.norm = nn.LayerNorm(dim)
-        self.mlp_head = nn.Linear(dim, num_classes) if exists(num_classes) else nn.Identity()
-
-    def forward(
-        self,
-        img,
-        return_embeddings = False
-    ):
-        p = self.patch_size
-
-        x = rearrange(img, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = p, p2 = p)
-        x = self.patch_to_embedding(x)
-        n = x.shape[1]
-
-        x = x + self.pos_embedding[:, :n]
-
-        x = self.post_emb_norm(x)
-        x = self.dropout(x)
-
-        x = self.attn_layers(x)
-        x = self.norm(x)
-
-        if not exists(self.mlp_head) or return_embeddings:
-            return x
-
-        x = x.mean(dim = -2)
-        return self.mlp_head(x)
-
-class TransformerWrapper(nn.Module):
+class Transformer(nn.Module):
     def __init__(
         self,
         *,
@@ -1293,15 +1227,8 @@ class TransformerWrapper(nn.Module):
         dim = attn_layers.dim
         emb_dim = default(emb_dim, dim)
 
-        # your own tokenizer
-        # self.tokenizer = tokenizer
-
-        #your own embedding function
-        self.token_emb = TokenEmbedding(emb_dim, num_tokens, embedding_provider, l2norm_embed=l2norm_embed)
-
         self.emb_dim = emb_dim
         self.num_tokens = num_tokens
-
         self.max_seq_len = max_seq_len
         self.max_mem_len = max_mem_len
         self.shift_mem_down = shift_mem_down
@@ -1443,160 +1370,4 @@ class TransformerWrapper(nn.Module):
             attn_maps = list(map(lambda t: t.post_softmax_attn, intermediates.attn_intermediates))
             return out, attn_maps
 
-        return out
-
-class ContinuousTransformerWrapper(nn.Module):
-    def __init__(
-        self,
-        *,
-        max_seq_len,
-        attn_layers,
-        dim_in = None,
-        dim_out = None,
-        emb_dim = None,
-        post_emb_norm = False,
-        emb_dropout = 0.,
-        use_abs_pos_emb = True,
-        scaled_sinu_pos_emb = False
-    ):
-        super().__init__()
-        assert isinstance(attn_layers, AttentionLayers), 'attention layers must be one of Encoder or Decoder'
-
-        dim = attn_layers.dim
-
-        self.max_seq_len = max_seq_len
-
-        if not (use_abs_pos_emb and not attn_layers.has_pos_emb):
-            self.pos_emb = always(0)
-        elif scaled_sinu_pos_emb:
-            self.pos_emb = ScaledSinusoidalEmbedding(dim)
-        else:
-            self.pos_emb = AbsolutePositionalEmbedding(dim, max_seq_len)
-
-        self.post_emb_norm = nn.LayerNorm(dim) if post_emb_norm else nn.Identity()
-        self.emb_dropout = nn.Dropout(emb_dropout)
-
-        self.project_in = nn.Linear(dim_in, dim) if exists(dim_in) else nn.Identity()
-
-        self.attn_layers = attn_layers
-        self.norm = nn.LayerNorm(dim)
-
-        self.project_out = nn.Linear(dim, dim_out) if exists(dim_out) else nn.Identity()
-
-    def forward(
-        self,
-        x,
-        return_embeddings = False,
-        return_intermediates = False,
-        mask = None,
-        return_attn = False,
-        mems = None,
-        pos = None,
-        prepend_embeds = None,
-        **kwargs
-    ):
-        x = self.project_in(x)
-        x = x + self.pos_emb(x, pos = pos)
-
-        x = self.post_emb_norm(x)
-
-        # whether to append embeds, as in PaLI, for image embeddings
-
-        if exists(prepend_embeds):
-            _, prepend_dim = prepend_embeds.shape[1:]
-            assert prepend_dim == x.shape[-1], 'prepended embeddings need to have same dimensions as model dimensions'
-
-            x = torch.cat((prepend_embeds, x), dim = -2)
-
-        x = self.emb_dropout(x)
-
-        x, intermediates = self.attn_layers(x, mask = mask, mems = mems, return_hiddens = True, **kwargs)
-        x = self.norm(x)
-
-        out = self.project_out(x) if not return_embeddings else x
-
-        if return_intermediates:
-            return out, intermediates
-
-        if return_attn:
-            attn_maps = list(map(lambda t: t.post_softmax_attn, intermediates.attn_intermediates))
-            return out, attn_maps
-
-        return out
-
-class XTransformer(nn.Module):
-    def __init__(
-        self,
-        *,
-        dim,
-        tie_token_emb = False,
-        ignore_index = -100,
-        pad_value = 0,
-        deepnorm = False,
-        cross_attn_tokens_dropout = 0.,
-        **kwargs
-    ):
-        super().__init__()
-        enc_kwargs, kwargs = groupby_prefix_and_trim('enc_', kwargs)
-        dec_kwargs, kwargs = groupby_prefix_and_trim('dec_', kwargs)
-
-        assert 'dim' not in enc_kwargs and 'dim' not in dec_kwargs, 'dimension of either encoder or decoder must be set with `dim` keyword'
-        enc_transformer_kwargs = pick_and_pop(['num_tokens', 'max_seq_len'], enc_kwargs)
-        enc_transformer_kwargs['emb_dropout'] = enc_kwargs.pop('emb_dropout', 0)
-        enc_transformer_kwargs['num_memory_tokens'] = enc_kwargs.pop('num_memory_tokens', None)
-        enc_transformer_kwargs['scaled_sinu_pos_emb'] = enc_kwargs.pop('scaled_sinu_pos_emb', False)
-        enc_transformer_kwargs['use_abs_pos_emb'] = enc_kwargs.pop('use_abs_pos_emb', True)
-
-        dec_transformer_kwargs = pick_and_pop(['num_tokens', 'max_seq_len'], dec_kwargs)
-        dec_transformer_kwargs['emb_dropout'] = dec_kwargs.pop('emb_dropout', 0)
-        dec_transformer_kwargs['scaled_sinu_pos_emb'] = dec_kwargs.pop('scaled_sinu_pos_emb', False)
-        dec_transformer_kwargs['use_abs_pos_emb'] = dec_kwargs.pop('use_abs_pos_emb', True)
-
-        self.cross_attn_tokens_dropout = cross_attn_tokens_dropout  # how many tokens from the encoder to dropout when cross attending from decoder - seen in a couple papers, including Perceiver AR - this will also be very effective regularization when cross attending to very long memories
-
-        if deepnorm:
-            enc_kwargs['scale_residual'] = True
-            dec_kwargs['scale_residual'] = True
-
-            enc_depth = enc_kwargs['depth']
-            dec_depth = dec_kwargs['depth']
-
-            enc_kwargs['scale_residual_constant'] = 0.81 * ((enc_depth ** 4) * dec_depth) ** .0625
-            dec_kwargs['scale_residual_constant'] = (3 * dec_depth) ** 0.25
-
-        self.encoder = TransformerWrapper(
-            **enc_transformer_kwargs,
-            attn_layers = Encoder(dim = dim, **enc_kwargs)
-        )
-
-        self.decoder = TransformerWrapper(
-            **dec_transformer_kwargs,
-            attn_layers = Decoder(dim = dim, cross_attend = True, **dec_kwargs)
-        )
-
-        if deepnorm:
-            deepnorm_init(self.encoder, 0.87 * ((enc_depth ** 4) * dec_depth) ** -0.0625)
-            deepnorm_init(self.decoder, (12 * dec_depth) ** -0.25)
-
-        if tie_token_emb:
-            self.decoder.token_emb = self.encoder.token_emb
-
-        self.decoder = AutoregressiveWrapper(self.decoder, ignore_index=ignore_index, pad_value=pad_value)
-
-    @torch.no_grad()
-    def generate(self, seq_in, seq_out_start, seq_len, mask = None, attn_mask = None, **kwargs):
-        encodings = self.encoder(seq_in, mask = mask, attn_mask = attn_mask, return_embeddings = True)
-        return self.decoder.generate(seq_out_start, seq_len, context = encodings, context_mask = mask, **kwargs)
-
-    def forward(self, src, tgt, mask = None, attn_mask = None, src_prepend_embeds = None):
-
-        if exists(src_prepend_embeds) and exists(mask):
-            mask = pad_at_dim(mask, (src_prepend_embeds.shape[-2], 0), dim = -1, value = True)
-
-        enc = self.encoder(src, mask = mask, attn_mask = attn_mask, prepend_embeds = src_prepend_embeds, return_embeddings = True)
-
-        if self.training and self.cross_attn_tokens_dropout > 0:
-            enc, mask = dropout_seq(enc, mask, self.cross_attn_tokens_dropout)
-
-        out = self.decoder(tgt, context = enc, context_mask = mask)
         return out

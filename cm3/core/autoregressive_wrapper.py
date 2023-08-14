@@ -1,9 +1,10 @@
 from math import ceil
-import torch
-from torch import nn
-import torch.nn.functional as F
 
-from einops import rearrange, pack, unpack
+import torch
+import torch.nn.functional as F
+from einops import pack, rearrange, unpack
+from torch import nn
+
 
 def exists(val):
     return val is not None

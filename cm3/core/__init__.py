@@ -6,5 +6,3 @@ if version.parse(torch.__version__) >= version.parse('2.0.0'):
     allow_ops_in_compiled_graph()
 
 
-# d
-
