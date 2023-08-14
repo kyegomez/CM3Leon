@@ -1,54 +1,14 @@
 from torch.nn import Module
-from cm3.core.transformer import Transformer, AutoregressiveWrapper, AndromedaEmbedding, Decoder
+from cm3.core.transformer import Transformer, AutoregressiveWrapper, AndromedaEmbedding, Decoder, ViTransformerWrapper, Encoder
 from transformers import AutoTokenizer
-
-class AndromedaTokenizer:
-    def __init__(self):
-        self.tokenizer= AutoTokenizer.from_pretrained(
-            "EleutherAI/gpt-neox-20b",
-            eos_token="<eos>",
-            pad_token="<pad>",
-            extra_ids=0,
-            model_max_length=8192
-        )
-
-    def tokenize_texts(self, texts):
-        return self.tokenizer(texts, return_tensors='pt', padding=True, truncation=True).input_ids
-    
-    def decode(self, texts):
-        return self.tokenizer.decode(texts)
-    
-    def __len__(self):
-        num_tokens = len(self.tokenizer)
-        return num_tokens
-
 
 
 class Andromeda(Module):
     """
     Andromeda is a transformer-based model architecture. It initializes with 
     a Transformer and AutoregressiveWrapper with default or user-specified parameters.
-    """
-    def __init__(self, 
-                 num_tokens=50432, 
-                 max_seq_len=8192, 
-                 dim=2560, 
-                 depth=32, 
-                 dim_head=128, 
-                 heads=24,
-                 use_abs_pos_emb=False, 
-                 alibi_pos_bias=True, 
-                 alibi_num_heads=12, 
-                 rotary_xpos=True,
-                 attn_flash=True, 
-                #  shift_tokens=1, 
-                 attn_one_kv_head=True,  # multiquery attention
-                 qk_norm=True, 
-                 attn_qk_norm=True, 
-                 attn_qk_norm_dim_scale=True, 
-                 embedding_provider=AndromedaEmbedding()):
-        """
-        Initialize the model with specified or default parameters.
+
+    Initialize the model with specified or default parameters.
         Args:
         - num_tokens: Number of tokens in the vocabulary
         - max_seq_len: Maximum sequence length
@@ -68,8 +28,38 @@ class Andromeda(Module):
         - attn_qk_norm: Attention query-key normalization
         - attn_qk_norm_dim_scale: Attention query-key normalization dimension scale
         - embedding_provider: Embedding provider module
-        """
-        super().__init__()
+    """
+    def __init__(self, 
+                 num_tokens=50432, 
+                 max_seq_len=8192, 
+                 dim=2560, 
+                 depth=32, 
+                 dim_head=128, 
+                 heads=24,
+                 use_abs_pos_emb=False, 
+                 alibi_pos_bias=True, 
+                 alibi_num_heads=12, 
+                 rotary_xpos=True,
+                 attn_flash=True, 
+                 image_size=256,
+                 patch_size=32,
+                 attn_one_kv_head=True,  # multiquery attention
+                 qk_norm=True, 
+                 attn_qk_norm=True, 
+                 attn_qk_norm_dim_scale=True, 
+                 embedding_provider=AndromedaEmbedding()):
+        super(Andromeda).__init__()
+
+        self.encoder = ViTransformerWrapper(
+            image_size=image_size,
+            patch_size=patch_size,
+            attn_layers=Decoder(
+                dim=dim,
+                depth=depth,
+                dim_head=dim_head,
+                heads=heads
+            )
+        )
 
         try:
             self.Andromeda = Transformer(
@@ -91,7 +81,8 @@ class Andromeda(Module):
                     attn_one_kv_head=attn_one_kv_head,
                     qk_norm=qk_norm,
                     attn_qk_norm=attn_qk_norm,
-                    attn_qk_norm_dim_scale=attn_qk_norm_dim_scale
+                    attn_qk_norm_dim_scale=attn_qk_norm_dim_scale,
+                    cross_attend=True
                 )
             )
 
@@ -101,7 +92,7 @@ class Andromeda(Module):
             print("Failed to initialize Andromeda: ", e)
             raise
 
-    def forward(self, text_tokens, **kwargs):
+    def forward(self, img, text_tokens, **kwargs):
         """
         Forward pass through the model. It expects the input text_tokens.
         Args:
@@ -111,8 +102,15 @@ class Andromeda(Module):
         - output from the decoder
         """
         try:
-            model_input = self.decoder.forward(text_tokens)[0]
-            return self.decoder(model_input, padded_x=model_input[0])
-        except Exception as e:
-            print("Failed in forward method: ", e)
+            encoded_img = self.encoder(img, return_embeddings=True)
+            return self.decoder(text_tokens, context=encoded_img)
+        except Exception as error:
+            print(f"Failed in forward method: {error}")
             raise
+
+#usage
+img = torch.randn(1, 3, 256, 256)
+caption_tokens = torch.randint(0, 4)
+
+model = Andromeda
+output = model(img, caption_tokens)

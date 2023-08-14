@@ -20,7 +20,6 @@ triton = "*"
 deepspeed = "*"
 memory-profiler = "*"
 
-[tool.poetry.source]
 [[tool.poetry.source]]
 name = "torch_nightly"
 url = "https://download.pytorch.org/whl/nightly/cu118/torch_nightly.html"

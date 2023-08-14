@@ -3,19 +3,21 @@ import logging
 import torch
 import torch.nn as nn
 from flamingo_pytorch import PerceiverResampler
+from torch.nn import Module
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from transformers import AutoTokenizer, CLIPModel, CLIPProcessor
 
 from cm3.core.model import Andromeda
+from cm3.core.transformer import (
+    AndromedaEmbedding,
+    AutoregressiveWrapper,
+    Decoder,
+    Encoder,
+    Transformer,
+    ViTransformerWrapper,
+)
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Check if the modules are available
-try:
-    import bitsandbytes
-except ImportError as e:
-    logging.error(f"Failed to import module: {e}")
-    raise
 
 
 
@@ -121,89 +123,105 @@ class CM3LEONTokenizer:
             raise
 
 
-
-class CM3LEON(nn.Module):
+class CM3(Module):
     """
-    The main CM3LEON model class.
+    Andromeda is a transformer-based model architecture. It initializes with 
+    a Transformer and AutoregressiveWrapper with default or user-specified parameters.
 
-    Attributes:
-        clip_model (CLIPModel): The CLIP model for image processing.
-        embed (Embedding): The embedding layer for tokens.
-        embed_positions: (PositionEmbedding): The positional embedding layer.
-        
-        output_projection (Linear): the output projection layer.
-        config (DecoderConfig): The configuration for the decoder
-        decoder (Decoder): The decoder module
-
-        perceieve(PerceiverResampler): The PerceieverResampler module for image processing.
-        image_proj (Linear): The image projection layer.
+    Initialize the model with specified or default parameters.
+        Args:
+        - num_tokens: Number of tokens in the vocabulary
+        - max_seq_len: Maximum sequence length
+        - dim: Dimension of the model
+        - depth: Depth of the model
+        - dim_head: Dimension of the model head
+        - heads: Number of heads
+        - use_abs_pos_emb: Whether to use absolute position embedding
+        - alibi_pos_bias: Alibi position bias
+        - alibi_num_heads: Number of alibi heads
+        - rotary_xpos: Rotary position
+        - attn_flash: Attention flash
+        - deepnorm: Deep normalization
+        - shift_tokens: Number of tokens to shift
+        - attn_one_kv_head: Attention one key/value head
+        - qk_norm: Query-key normalization
+        - attn_qk_norm: Attention query-key normalization
+        - attn_qk_norm_dim_scale: Attention query-key normalization dimension scale
+        - embedding_provider: Embedding provider module
     """
+    def __init__(self, 
+                 num_tokens=50432, 
+                 max_seq_len=8192, 
+                 dim=2560, 
+                 depth=32, 
+                 dim_head=128, 
+                 heads=24,
+                 use_abs_pos_emb=False, 
+                 alibi_pos_bias=True, 
+                 alibi_num_heads=12, 
+                 rotary_xpos=True,
+                 attn_flash=True, 
+                 image_size=256,
+                 patch_size=32,
+                 attn_one_kv_head=True,  # multiquery attention
+                 qk_norm=True, 
+                 attn_qk_norm=True, 
+                 attn_qk_norm_dim_scale=True, 
+                 embedding_provider=AndromedaEmbedding()):
+        super(Andromeda).__init__()
 
-    def __init__(self):
-        super().__init__()
-
-        # Instantiate Clip Vit-l/14
-        try:
-            self.clip_model = CLIPModel.from_pretrained("laion/CLIP-ViT-L-14-laion2B-s32B-b82K").vision_model
-        except Exception as e:
-            logging.error(f"Failed to initialize CLIP model: {e}")
-            raise
-
-        self.embed = bitsandbytes.nn.modules.Embedding(32002, 2048, padding_idx=1)
-
-        self.output_projection = nn.Linear(2048, 32002, bias=False)
-        nn.init.normal_(self.output_projection.weight, mean=0, std=2048**-0.5)
-        
-        try:
-            self.decoder = Andromeda()
-        except Exception as e:
-            logging.error(f"Failed to initialize Decoder: {e}")
-            raise
-
-        self.perceive = PerceiverResampler(
-            dim = 1024,
-            depth = 2,
-            dim_head = 64,
-            heads = 8,
-            num_latents = 64,
-            num_media_embeds = 257
+        self.encoder = ViTransformerWrapper(
+            image_size=image_size,
+            patch_size=patch_size,
+            attn_layers=Decoder(
+                dim=dim,
+                depth=depth,
+                dim_head=dim_head,
+                heads=heads
+            )
         )
 
-        self.image_proj = nn.Linear(1024, 2048, bias=False)
-        nn.init.normal_(self.image_proj.weight, mean=0, std=2048**-0.5)
+        try:
+            self.Andromeda = Transformer(
+                num_tokens=num_tokens,
+                max_seq_len=max_seq_len,
+                use_abs_pos_emb=use_abs_pos_emb,
+                embedding_provider=embedding_provider,
+                attn_layers=Decoder(
+                    dim=dim,
+                    depth=depth,
+                    dim_head=dim_head,
+                    heads=heads,
+                    alibi_pos_bias=alibi_pos_bias,
+                    alibi_num_heads=alibi_num_heads,
+                    rotary_xpos=rotary_xpos,
+                    attn_flash=attn_flash,
+                    attn_one_kv_head=attn_one_kv_head,
+                    qk_norm=qk_norm,
+                    attn_qk_norm=attn_qk_norm,
+                    attn_qk_norm_dim_scale=attn_qk_norm_dim_scale,
+                    cross_attend=True
+                )
+            )
 
-    def forward(self, text_tokens: torch.Tensor, images: torch.Tensor, **kwargs):
+            self.decoder = AutoregressiveWrapper(self.Andromeda)
+
+        except Exception as e:
+            print("Failed to initialize Andromeda: ", e)
+            raise
+
+    def forward(self, img, text_tokens, **kwargs):
         """
-       The forward pass for the CM3LEON model.
-
-       Args:
-            text_tokens (torch.Tensor): The text tokens.
-            images (torch.Tensor): The image tokens.
-
+        Forward pass through the model. It expects the input text_tokens.
+        Args:
+        - text_tokens: Input tokens
+        - kwargs: Other arguments
         Returns:
-            The output of the decoder 
-        
+        - output from the decoder
         """
-        if not isinstance(text_tokens, torch.Tensor) or not isinstance(images, torch.Tensor):
-            raise TypeError("text_tokens and images must be instances of torch.Tensor")
-
         try:
-            images = self.clip_model(pixel_values=images)["last_hidden_state"]
-            images = self.perceive(images).squeeze(1)
-            images = self.image_proj(images)
-        except Exception as e:
-            logging.error(f"Failed during image processing: {e}")
-            raise
-
-        try:
-            model_input = self.decoder(text_tokens)[0]
-            model_input = torch.cat([model_input[:, 0:2], images, model_input[:, 2:]], dim=1)
-        except Exception as e:
-            logging.error(f"Failed during text processing: {e}")
-            raise
-
-        try:
-            return self.decoder(model_input, padded_x=model_input[0])
-        except Exception as e:
-            logging.error(f"Failed during model forward pass: {e}")
+            encoded_img = self.encoder(img, return_embeddings=True)
+            return self.decoder(text_tokens, context=encoded_img)
+        except Exception as error:
+            print(f"Failed in forward method: {error}")
             raise
