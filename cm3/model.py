@@ -1,18 +1,15 @@
 import logging
 
 import torch
-import torch.nn as nn
-from flamingo_pytorch import PerceiverResampler
 from torch.nn import Module
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
-from transformers import AutoTokenizer, CLIPModel, CLIPProcessor
+from transformers import AutoTokenizer, CLIPProcessor
 
 from cm3.core.model import Andromeda
 from cm3.core.transformer import (
     AndromedaEmbedding,
     AutoregressiveWrapper,
     Decoder,
-    Encoder,
     Transformer,
     ViTransformerWrapper,
 )
@@ -168,7 +165,7 @@ class CM3(Module):
                  attn_qk_norm=True, 
                  attn_qk_norm_dim_scale=True, 
                  embedding_provider=AndromedaEmbedding()):
-        super(Andromeda).__init__()
+        super(CM3).__init__()
 
         self.encoder = ViTransformerWrapper(
             image_size=image_size,

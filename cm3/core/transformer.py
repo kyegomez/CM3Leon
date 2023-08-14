@@ -8,10 +8,11 @@ from typing import List
 
 import torch
 import torch.nn.functional as F
-from cm3.core.attend import Attend, Intermediates
-from cm3.core.autoregressive_wrapper import AutoregressiveWrapper
 from einops import rearrange, repeat
 from torch import Tensor, einsum, nn
+
+from cm3.core.attend import Attend, Intermediates
+from cm3.core.autoregressive_wrapper import AutoregressiveWrapper
 
 # import bitsandbytes as bnb
 

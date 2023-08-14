@@ -9,9 +9,6 @@ from einops import rearrange
 from packaging import version
 from torch import Tensor, einsum, nn
 
-# from flash import FlashAttention
-
-# constants
 
 EfficientAttentionConfig = namedtuple('EfficientAttentionConfig', ['enable_flash', 'enable_math', 'enable_mem_efficient'])
 
