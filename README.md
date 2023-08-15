@@ -2,10 +2,21 @@
 
 # CM3Leon: Autoregressive Multi-Modal Model for Text and Image Generation
 
+[![GitHub issues](https://img.shields.io/github/issues/kyegomez/CM3Leon)](https://github.com/kyegomez/CM3Leon/issues) 
+[![GitHub forks](https://img.shields.io/github/forks/kyegomez/CM3Leon)](https://github.com/kyegomez/CM3Leon/network) 
+[![GitHub stars](https://img.shields.io/github/stars/kyegomez/CM3Leon)](https://github.com/kyegomez/CM3Leon/stargazers) [![GitHub license](https://img.shields.io/github/license/kyegomez/CM3Leon)](https://github.com/kyegomez/CM3Leon/blob/master/LICENSE)
+[![Share on Twitter](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Share%20%40kyegomez/CM3Leon)](https://twitter.com/intent/tweet?text=Excited%20to%20introduce%20CM3Leon,%20the%20all-new%20Multi-Modal%20model%20with%20the%20potential%20to%20revolutionize%20automation.%20Join%20us%20on%20this%20journey%20towards%20a%20smarter%20future.%20%23CM3Leon%20%23Multi-Modal&url=https%3A%2F%2Fgithub.com%2Fkyegomez%2FCM3Leon)
+[![Share on Facebook](https://img.shields.io/badge/Share-%20facebook-blue)](https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fgithub.com%2Fkyegomez%2FCM3Leon)
+[![Share on LinkedIn](https://img.shields.io/badge/Share-%20linkedin-blue)](https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fgithub.com%2Fkyegomez%2FCM3Leon&title=Introducing%20CM3Leon%2C%20the%20All-New%20Multi-Modal%20Model&summary=CM3Leon%20is%20the%20next-generation%20Multi-Modal%20model%20that%20promises%20to%20transform%20industries%20with%20its%20intelligence%20and%20efficiency.%20Join%20us%20to%20be%20a%20part%20of%20this%20revolutionary%20journey%20%23CM3Leon%20%23Multi-Modal&source=)
+![Discord](https://img.shields.io/discord/999382051935506503)
+[![Share on Reddit](https://img.shields.io/badge/-Share%20on%20Reddit-orange)](https://www.reddit.com/submit?url=https%3A%2F%2Fgithub.com%2Fkyegomez%2FCM3Leon&title=Exciting%20Times%20Ahead%20with%20CM3Leon%2C%20the%20All-New%20Multi-Modal%20Model%20%23CM3Leon%20%23Multi-Modal) [![Share on Hacker News](https://img.shields.io/badge/-Share%20on%20Hacker%20News-orange)](https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgithub.com%2Fkyegomez%2FCM3Leon&t=Exciting%20Times%20Ahead%20with%20CM3Leon%2C%20the%20All-New%20Multi-Modal%20Model%20%23CM3Leon%20%23Multi-Modal)
+[![Share on Pinterest](https://img.shields.io/badge/-Share%20on%20Pinterest-red)](https://pinterest.com/pin/create/button/?url=https%3A%2F%2Fgithub.com%2Fkyegomez%2FCM3Leon&media=https%3A%2F%2Fexample.com%2Fimage.jpg&description=CM3Leon%2C%20the%20Revolutionary%20Multi-Modal%20Model%20that%20will%20Change%20the%20Way%20We%20Work%20%23CM3Leon%20%23Multi-Modal)
+[![Share on WhatsApp](https://img.shields.io/badge/-Share%20on%20WhatsApp-green)](https://api.whatsapp.com/send?text=I%20just%20discovered%20CM3Leon,%20the%20all-new%20Multi-Modal%20model%20that%20promises%20to%20revolutionize%20automation.%20Join%20me%20on%20this%20exciting%20journey%20towards%20a%20smarter%20future.%20%23CM3Leon%20%23Multi-Modal%0A%0Ahttps%3A%2F%2Fgithub.com%2Fkyegomez%2FCM3Leon)
+
+
 CM3Leon is a transformer-based autoregressive model designed for multi-modal tasks, specifically text and image generation. The model is trained in two stages, using a large diverse multimodal dataset and augmented retrieval pretraining. It also implements contrastive decoding to enhance the quality of the generated samples.
 
 [CM3LEON, PAPER LINK](https://scontent-mia3-1.xx.fbcdn.net/v/t39.2365-6/358725877_789390529544546_1176484804732743296_n.pdf?_nc_cat=108&ccb=1-7&_nc_sid=3c67a6&_nc_ohc=6UJxCrFyo1kAX9m_mgN&_nc_ht=scontent-mia3-1.xx&oh=00_AfCn3KOP3KK1t11Vi957PpcmSINr6LEu1bz9fDXjFfkkLg&oe=64BF3DF2)
-
 
 ## Install
 
