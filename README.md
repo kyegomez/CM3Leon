@@ -1,4 +1,5 @@
-[Join Agora](https://discord.gg/qUtxnK2NMf) the community of engineers changing the world with their creations.🥳🎉🎊
+[![Multi-Modality](agorabanner.png)](https://discord.gg/qUtxnK2NMf)
+
 
 # CM3Leon: Autoregressive Multi-Modal Model for Text and Image Generation
 
