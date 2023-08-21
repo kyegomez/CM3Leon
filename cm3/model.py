@@ -7,12 +7,12 @@ from transformers import AutoTokenizer, CLIPProcessor
 
 from cm3.core.transformer import (
     AndromedaEmbedding,
-    AutoregressiveWrapper,
     Decoder,
     Encoder,
     Transformer,
     ViTransformerWrapper,
 )
+from cm3.core.autoregressive_wrapper import AutoregressiveWrapper
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 

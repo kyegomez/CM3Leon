@@ -4,7 +4,6 @@ from functools import partial, wraps
 
 import torch
 import torch.nn.functional as F
-from cm3.core.flash import attention
 from einops import rearrange
 from packaging import version
 from torch import Tensor, einsum, nn
@@ -194,8 +193,8 @@ class Attend(nn.Module):
             return self.flash_attn(q, k, v, mask = mask, attn_bias = attn_bias)
             # return FlashAttention(q, k, v, mask=mask, attn_bias=attn_bias )
 
-        if self.triton:
-            return attention(q, k, v, self.casual, scale)
+        # if self.triton:
+        #     return attention(q, k, v, self.casual, scale)
 
         kv_einsum_eq = 'b j d' if k.ndim == 3 else 'b h j d'
 

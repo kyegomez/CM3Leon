@@ -13,7 +13,6 @@ from torch import Tensor, einsum, nn
 
 from cm3.core.attend import Attend, Intermediates
 
-# import bitsandbytes as bnb
 
 # constants
 
