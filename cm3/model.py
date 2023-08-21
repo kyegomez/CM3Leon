@@ -165,10 +165,9 @@ class CM3(Module):
                  attn_qk_norm=True, 
                  attn_qk_norm_dim_scale=True, 
                  embedding_provider=AndromedaEmbedding()):
-        super(CM3).__init__()
+        super().__init__()
 
         self.encoder = None
-
         self.encoder = ViTransformerWrapper(
             image_size=image_size,
             patch_size=patch_size,
@@ -205,14 +204,6 @@ class CM3(Module):
         self.decoder = AutoregressiveWrapper(self.transformer)
 
     def forward(self, img, text_tokens, **kwargs):
-        """
-        Forward pass through the model. It expects the input text_tokens.
-        Args:
-        - text_tokens: Input tokens
-        - kwargs: Other arguments
-        Returns:
-        - output from the decoder
-        """
         try:
             encoded_img = self.encoder(img, return_embeddings=True)
             return self.decoder(text_tokens, context=encoded_img)
