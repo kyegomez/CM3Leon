@@ -10,6 +10,7 @@ from cm3.core.transformer import (
     AndromedaEmbedding,
     AutoregressiveWrapper,
     Decoder,
+    Encoder,
     Transformer,
     ViTransformerWrapper,
 )
@@ -167,10 +168,12 @@ class CM3(Module):
                  embedding_provider=AndromedaEmbedding()):
         super(CM3).__init__()
 
+        self.encoder = None
+
         self.encoder = ViTransformerWrapper(
             image_size=image_size,
             patch_size=patch_size,
-            attn_layers=Decoder(
+            attn_layers=Encoder(
                 dim=dim,
                 depth=depth,
                 dim_head=dim_head,
