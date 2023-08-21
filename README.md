@@ -32,12 +32,13 @@ To start with CM3Leon in a PyTorch environment:
 ```python
 import torch
 from cm3.model import CM3
-# Example
+
 img = torch.randn(1, 3, 256, 256)
-caption_tokens = torch.randint(0, 4)
+text = torch.randint(0, 20000, (1, 1024))
 
 model = CM3()
-output = model(img, caption_tokens)
+output = model(text, img)
+
 ```
 
 This repository hosts the open-source implementation of CM3Leon, a state-of-the-art autoregressive multi-modal model for text and image generation. The model is introduced in the paper "Scaling Autoregressive Multi-Modal Models: Pretraining and Instruction Tuning".
