@@ -5,7 +5,6 @@ from torch.nn import Module
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from transformers import AutoTokenizer, CLIPProcessor
 
-from cm3.core.model import Andromeda
 from cm3.core.transformer import (
     AndromedaEmbedding,
     AutoregressiveWrapper,
