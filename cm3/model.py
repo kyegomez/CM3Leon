@@ -203,7 +203,7 @@ class CM3(Module):
 
         self.decoder = AutoregressiveWrapper(self.transformer)
 
-    def forward(self, img, text_tokens, **kwargs):
+    def forward(self, text_tokens, img, **kwargs):
         try:
             encoded_img = self.encoder(img, return_embeddings=True)
             return self.decoder(text_tokens, context=encoded_img)
