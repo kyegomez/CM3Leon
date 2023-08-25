@@ -1,10 +1,12 @@
 import logging
 
 import torch
+from torch import nn
 from torch.nn import Module
 from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from transformers import AutoTokenizer, CLIPProcessor
 
+from cm3.core.autoregressive_wrapper import AutoregressiveWrapper
 from cm3.core.transformer import (
     AndromedaEmbedding,
     Decoder,
@@ -12,7 +14,6 @@ from cm3.core.transformer import (
     Transformer,
     ViTransformerWrapper,
 )
-from cm3.core.autoregressive_wrapper import AutoregressiveWrapper
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -167,7 +168,6 @@ class CM3(Module):
                  embedding_provider=AndromedaEmbedding()):
         super().__init__()
 
-        self.encoder = None
         self.encoder = ViTransformerWrapper(
             image_size=image_size,
             patch_size=patch_size,
@@ -203,10 +203,39 @@ class CM3(Module):
 
         self.decoder = AutoregressiveWrapper(self.transformer)
 
+    def mask_and_relocate(self, text_tokens):
+        #mask image span
+        text_tokens = text_tokens.masked_fill(text_tokens==self.im_idx, self.mask_token)
+
+        #relocate to end
+        image_span = text_tokens[text_tokens==self.im_end_idx].unsqueeze(1)
+        text_tokens = torch.cat([text_tokens, image_span], dim=1)
+        return text_tokens
+    
+    def cm3_loss(self, log_probs, labels):
+        #cm3 loss prediction
+        loss = nn.NLLLoss()(log_probs, labels)
+        return loss
+
     def forward(self, text_tokens, img, **kwargs):
         try:
             encoded_img = self.encoder(img, return_embeddings=True)
-            return self.decoder(text_tokens, context=encoded_img)
+            
+            #mask and relocate image span in text tokens
+            text_tokens = self.mask_and_relocate(text_tokens)
+
+            #concat
+            context = torch.cat([encoded_img, text_tokens], dim=1)
+
+            #get log probs
+            log_probs = self.decoder(context, **kwargs)
+
+            #calculate cm3 loss
+            loss = self.cm3_loss(log_probs, text_tokens)
+
+            return loss
+            # return self.decoder(text_tokens, context=encoded_img)
         except Exception as error:
             print(f"Failed in forward method: {error}")
             raise
+
