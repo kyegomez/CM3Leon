@@ -19,6 +19,10 @@ CM3Leon is a transformer-based autoregressive model designed for multi-modal tas
 
 [CM3LEON, PAPER LINK](https://scontent-mia3-1.xx.fbcdn.net/v/t39.2365-6/358725877_789390529544546_1176484804732743296_n.pdf?_nc_cat=108&ccb=1-7&_nc_sid=3c67a6&_nc_ohc=6UJxCrFyo1kAX9m_mgN&_nc_ht=scontent-mia3-1.xx&oh=00_AfCn3KOP3KK1t11Vi957PpcmSINr6LEu1bz9fDXjFfkkLg&oe=64BF3DF2)
 
+* Please Help with this open source implementation in the Agora discord, ![Discord](https://img.shields.io/discord/999382051935506503)
+
+
+
 ## Install
 
 ```pip3 install cm3```
