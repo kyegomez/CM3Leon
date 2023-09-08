@@ -18,7 +18,7 @@
 
 CM3Leon is a transformer-based autoregressive model designed for multi-modal tasks, specifically text and image generation. The model is trained in two stages, using a large diverse multimodal dataset and augmented retrieval pretraining. It also implements contrastive decoding to enhance the quality of the generated samples.
 
-[CM3LEON, PAPER LINK](https://scontent-mia3-1.xx.fbcdn.net/v/t39.2365-6/358725877_789390529544546_1176484804732743296_n.pdf?_nc_cat=108&ccb=1-7&_nc_sid=3c67a6&_nc_ohc=6UJxCrFyo1kAX9m_mgN&_nc_ht=scontent-mia3-1.xx&oh=00_AfCn3KOP3KK1t11Vi957PpcmSINr6LEu1bz9fDXjFfkkLg&oe=64BF3DF2)
+[CM3LEON, PAPER LINK](https://ai.meta.com/research/publications/scaling-autoregressive-multi-modal-models-pretraining-and-instruction-tuning/)
 
 * Please Help with this open source implementation in the Agora discord, ![Discord](https://img.shields.io/discord/999382051935506503)
 
@@ -105,6 +105,24 @@ The model size ranges from 350M to 7B parameters.
 
 ### Data 
 
+
+Here is a markdown table with the datasets used in the paper along with additional metadata and source links:
+
+| Dataset | Domain | Size | Source | 
+|-|-|-|-|  
+| Shutterstock | Images and captions | 3 billion text tokens, licensed image data | Proprietary dataset, described in paper |
+| MS-COCO | Image captioning | 591K image-caption pairs | [Microsoft COCO Captions](https://cocodataset.org/#captions-2015) |
+| Flickr30k | Image captioning | 144K image-caption pairs | [Flickr30k Entities](https://www.robots.ox.ac.uk/~vgg/data/flickr30k/) |  
+| Image Paragraph | Dense image captioning | 14K images with paragraph captions | [Image Paragraph dataset](https://cs.stanford.edu/people/ranjaykrishna/imcap/) |
+| Localized Narratives | Image paragraph captioning | 164K images with localized narratives | [Localized Narratives](https://github.com/jponttuset/localizing-narratives) |
+| VQA2 | Visual question answering | 1.3M images with question-answer pairs | [VQA2 dataset](https://visualqa.org/download.html) |  
+| VizWiz | Visual question answering for blind users | 92K images with question-answer pairs | [VizWiz dataset](https://vizwiz.org/) |
+| OKVQA | Knowledge-based VQA | 26K images with question-answer pairs | [OK-VQA dataset](https://okvqa.allenai.org/) |
+| ScienceQA | Scientific visual QA | 6K images with multi-choice QA pairs | [ScienceQA](https://allenai.org/data/science-qa) |
+
+
+The model was trained and evaluated on several datasets including MS-COCO [...] (Chen et al., 2015), Flickr30k [...] (Young et al., 2014), etc.
+
 For successful implementation, CM3Leon requires:
 
 - A large (100M+ examples) diverse multimodal dataset like Shutterstock for pretraining.
@@ -128,6 +146,27 @@ For efficient inference, consider:
 - Using compiler-accelerated decoders like FasterTransformer.
 - Other optimizations like lower precision (FP16/INT8) and batching.
 - Efficient implementation of contrastive decoding.
+
+
+## HyperParameters
+```Model size # L dmodel Seq Length Batch LR Warmup Steps # GPUs # Tokens
+350M 24 1024 4096 8M 6e-04 1500 256 1.4T
+760M 24 1536 4096 8M 5e-04 1500 256 1.9T
+7B 32 4096 4096 8M 1.2e-04 1500 512 2.4T
+```
+
+## SuperVised FineTuning parameters
+``` 
+Model # GPUS Seq Length Batch Size LR Warm-up Steps # Tokens
+CM3Leon-760m 64 4096 2M 5e-05 150 30B
+CM3Leon-7b 128 4096 2M 5e-05 150 30B
+```
+
+# Innovations in the paper:
+
+* Conditional text + image generation with objective function + contrastive top k decoding
+
+* Multi-Modality models need to be dynamic they can't just generate the types of data they were trained on they need to be able to adapt to user needs therefore multi-modality models should be conditional, if prompted the model will generate text and or images, this is the future.
 
 ## Contributing
 
@@ -171,22 +210,4 @@ V(t.y < .i) = {t.yi is in V: P.exp(t.yi | t.y<.i) >= a * kmax(p.exp(w|t.y<i))}
 ```
 
 
-## HyperParameters
-```Model size # L dmodel Seq Length Batch LR Warmup Steps # GPUs # Tokens
-350M 24 1024 4096 8M 6e-04 1500 256 1.4T
-760M 24 1536 4096 8M 5e-04 1500 256 1.9T
-7B 32 4096 4096 8M 1.2e-04 1500 512 2.4T
-```
-
-## SuperVised FineTuning parameters
-``` 
-Model # GPUS Seq Length Batch Size LR Warm-up Steps # Tokens
-CM3Leon-760m 64 4096 2M 5e-05 150 30B
-CM3Leon-7b 128 4096 2M 5e-05 150 30B
-```
-
-# Innovations in the paper:
-
-* Conditional text + image generation with objective function + contrastive top k decoding
-
-* Multi-Modality models need to be dynamic they can't just generate the types of data they were trained on they need to be able to adapt to user needs therefore multi-modality models should be conditional, if prompted the model will generate text and or images, this is the future.
+# Citation

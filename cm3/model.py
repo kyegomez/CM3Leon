@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 
 # Implement classes with type hints and error handling
-class CM3LEONTokenizer:
+class CM3Tokenizer:
     """
     A tokenizer class for the CM3LEON model
 
