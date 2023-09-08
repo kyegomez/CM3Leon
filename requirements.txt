@@ -14,3 +14,4 @@ triton
 deepspeed
 bitsandbytes
 memory-profiler
+zetascale

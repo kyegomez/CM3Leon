@@ -19,6 +19,7 @@ datasets = "*"
 triton = "*"
 deepspeed = "*"
 memory-profiler = "*"
+zetascale = "*"
 
 [[tool.poetry.source]]
 name = "torch_nightly"
