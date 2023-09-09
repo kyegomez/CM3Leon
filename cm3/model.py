@@ -7,7 +7,8 @@ from torchvision.transforms import Compose, Normalize, Resize, ToTensor
 from transformers import AutoTokenizer, CLIPProcessor
 
 
-from zeta.nn.architecture.transformer import AutoregressiveWrapper, Decoder, Encoder, Transformer, ViTransformerWrapper
+from zeta.nn.architecture.transformer import Decoder, Encoder, Transformer, ViTransformerWrapper
+from zeta.nn.architecture.auto_regressive_wrapper import AutoregressiveWrapper
 
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
