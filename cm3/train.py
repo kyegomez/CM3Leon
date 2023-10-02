@@ -6,40 +6,40 @@ from functools import partial
 from itertools import chain
 
 import torch
-from torch.distributed.fsdp import (
-    FullyShardedDataParallel,
-    MixedPrecision,
-    BackwardPrefetch,
-    ShardingStrategy,
-)
-from accelerate import Accelerator
-from accelerate.utils import (DummyOptim, DummyScheduler,
-                              InitProcessGroupKwargs)
-from datasets import load_dataset
-from lion_pytorch import Lion
-
-from torch.nn import LayerNorm
-from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
-    CheckpointImpl, apply_activation_checkpointing, checkpoint_wrapper)
-from torch.distributed.fsdp.wrap import (
-    transformer_auto_wrap_policy
-)
-
-
-from torch.optim import AdamW
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-from transformers import (AutoTokenizer, default_data_collator,
-                          get_cosine_schedule_with_warmup,
-                          get_linear_schedule_with_warmup, set_seed)
-
-from cm3.utils.stable_adamw import StableAdamWUnfused
-# import bitsandbytes as bnb
-from cm3.model import CM3LEON
-
 
 ########### SETUP CONFIG
 import torch.distributed as dist
+from accelerate import Accelerator
+from accelerate.utils import DummyOptim, DummyScheduler, InitProcessGroupKwargs
+from datasets import load_dataset
+from lion_pytorch import Lion
+from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
+    CheckpointImpl,
+    apply_activation_checkpointing,
+    checkpoint_wrapper,
+)
+from torch.distributed.fsdp import (
+    BackwardPrefetch,
+    FullyShardedDataParallel,
+    MixedPrecision,
+    ShardingStrategy,
+)
+from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
+from torch.nn import LayerNorm
+from torch.optim import AdamW
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from transformers import (
+    AutoTokenizer,
+    default_data_collator,
+    get_cosine_schedule_with_warmup,
+    get_linear_schedule_with_warmup,
+    set_seed,
+)
+
+# import bitsandbytes as bnb
+from cm3.model import CM3LEON
+from cm3.utils.stable_adamw import StableAdamWUnfused
 
 # dist.init_process_group(backend='nccl') #init_method="env://")
 
