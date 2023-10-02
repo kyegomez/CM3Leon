@@ -2,7 +2,7 @@ import os
 from logging import getLogger
 from typing import List, Optional, Union
 
-from clipq import CLIPQ
+# from clipq import CLIPQ
 from sentencepiece import SentencePieceProcessor
 
 logger = getLogger()
@@ -91,67 +91,67 @@ class Tokenizer:
         return self.sp_model.decode([self.sp_model.piece_to_id("☺")] + t)[1:]
     
 
-class CM3LeonTokenizer(Tokenizer):
-    """
-    CM3LeonTokenizer is a tokenizer that uses a pretrained SentencePiece model
-    to convert text into tokens and vice versa.
+# class CM3LeonTokenizer(Tokenizer):
+#     """
+#     CM3LeonTokenizer is a tokenizer that uses a pretrained SentencePiece model
+#     to convert text into tokens and vice versa.
 
-    It includes the ability to add special tokens for infilling tasks and provides
-    functionality to encode and decode text with or without implicit leading spaces.
+#     It includes the ability to add special tokens for infilling tasks and provides
+#     functionality to encode and decode text with or without implicit leading spaces.
 
-    Parameters:
-    - model_path (str): Path to the pretrained SentencePiece model file.
+#     Parameters:
+#     - model_path (str): Path to the pretrained SentencePiece model file.
 
-    Attributes:
-    - n_words (int): Vocabulary size of the SentencePiece model.
-    - bos_id (int): Token ID of the beginning-of-sentence (BOS) token.
-    - eos_id (int): Token ID of the end-of-sentence (EOS) token.
-    - pad_id (int): Token ID of the padding (PAD) token.
-    - prefix_id (int, optional): Token ID of the prefix token. Default: None.
-    - middle_id (int, optional): Token ID of the middle token. Default: None.
-    - suffix_id (int, optional): Token ID of the suffix token. Default: None.
-    - eot_id (int, optional): Token ID of the end-of-turn (EOT) token. Default: None.
+#     Attributes:
+#     - n_words (int): Vocabulary size of the SentencePiece model.
+#     - bos_id (int): Token ID of the beginning-of-sentence (BOS) token.
+#     - eos_id (int): Token ID of the end-of-sentence (EOS) token.
+#     - pad_id (int): Token ID of the padding (PAD) token.
+#     - prefix_id (int, optional): Token ID of the prefix token. Default: None.
+#     - middle_id (int, optional): Token ID of the middle token. Default: None.
+#     - suffix_id (int, optional): Token ID of the suffix token. Default: None.
+#     - eot_id (int, optional): Token ID of the end-of-turn (EOT) token. Default: None.
 
-    Usage
-    -----
-    tokenizer = CM3LeonTokenizer(model_path="path/to/model")
-    tokens = tokenizer.encode("this is a description", "https://picsum.photos/800")
-    print(tokens)
-    """
-    def __init__(
-        self,
-        model_path: str
-    ):
-        super().__init__(model_path)
-        self.clip = CLIPQ(
-            model_path=model_path,
-            query_text="A photo of an image segment",
-        )
+#     Usage
+#     -----
+#     tokenizer = CM3LeonTokenizer(model_path="path/to/model")
+#     tokens = tokenizer.encode("this is a description", "https://picsum.photos/800")
+#     print(tokens)
+#     """
+#     def __init__(
+#         self,
+#         model_path: str
+#     ):
+#         super().__init__(model_path)
+#         self.clip = CLIPQ(
+#             model_path=model_path,
+#             query_text="A photo of an image segment",
+#         )
     
-    def encode(
-        self,
-        s: str = None,
-        image: str = None,
-    ) -> List[Union[int, float]]:
-        """Encodes the image and text into a sequence of tokens and embeddings"""
-        #encode text
-        text = self.encode(
-            s,
-            bos=True,
-            eos=False,
-        )
+#     def encode(
+#         self,
+#         s: str = None,
+#         image: str = None,
+#     ) -> List[Union[int, float]]:
+#         """Encodes the image and text into a sequence of tokens and embeddings"""
+#         #encode text
+#         text = self.encode(
+#             s,
+#             bos=True,
+#             eos=False,
+#         )
 
-        #get embeds for img
-        img = self.clip.run_from_url(
-            url=image,
-            h_splits=3,
-            v_splits=3
-        )
+#         #get embeds for img
+#         img = self.clip.run_from_url(
+#             url=image,
+#             h_splits=3,
+#             v_splits=3
+#         )
 
-        #combine text, tokens and image embeddings
-        #starting with a <break> token followed by img embeds 
-        # and ending with a eos token
+#         #combine text, tokens and image embeddings
+#         #starting with a <break> token followed by img embeds 
+#         # and ending with a eos token
 
-        seq = text + [self.break_id] + img + [self.eos_id]
-        return seq
+#         seq = text + [self.break_id] + img + [self.eos_id]
+#         return seq
     
