@@ -16,3 +16,4 @@ bitsandbytes
 memory-profiler
 zetascale
 clipq
+classifier-free-guidance-pytorch

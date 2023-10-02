@@ -21,6 +21,7 @@ deepspeed = "*"
 memory-profiler = "*"
 zetascale = "*"
 clipq = "*"
+classifier-free-guidance-pytorch = "*"
 
 [[tool.poetry.source]]
 name = "torch_nightly"

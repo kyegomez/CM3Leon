@@ -28,6 +28,9 @@ class Tokenizer:
     - middle_id (int, optional): Token ID of the middle token. Default: None.
     - suffix_id (int, optional): Token ID of the suffix token. Default: None.
     - eot_id (int, optional): Token ID of the end-of-turn (EOT) token. Default: None.
+
+
+
     """
     def __init__(self, model_path: str):
         # reload tokenizer
@@ -109,6 +112,11 @@ class CM3LeonTokenizer(Tokenizer):
     - suffix_id (int, optional): Token ID of the suffix token. Default: None.
     - eot_id (int, optional): Token ID of the end-of-turn (EOT) token. Default: None.
 
+    Usage
+    -----
+    tokenizer = CM3LeonTokenizer(model_path="path/to/model")
+    tokens = tokenizer.encode("this is a description", "https://picsum.photos/800")
+    print(tokens)
     """
     def __init__(
         self,
@@ -143,7 +151,7 @@ class CM3LeonTokenizer(Tokenizer):
         #combine text, tokens and image embeddings
         #starting with a <break> token followed by img embeds 
         # and ending with a eos token
-        
+
         seq = text + [self.break_id] + img + [self.eos_id]
         return seq
     
