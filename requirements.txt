@@ -15,3 +15,4 @@ deepspeed
 bitsandbytes
 memory-profiler
 zetascale
+clipq
