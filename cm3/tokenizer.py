@@ -2,7 +2,7 @@ import os
 from logging import getLogger
 from typing import List, Optional, Union
 
-from clipq.main import CLIPQ
+from clipq import CLIPQ
 from sentencepiece import SentencePieceProcessor
 
 logger = getLogger()
