@@ -1,8 +1,8 @@
-
 import os
 from logging import getLogger
-from typing import List, Optional
+from typing import List, Optional, Union
 
+from clipq import CLIPQ
 from sentencepiece import SentencePieceProcessor
 
 logger = getLogger()
@@ -51,6 +51,8 @@ class Tokenizer:
         self.break_id: Optional[int] = self.sp_model.piece_to_id("_<BREAK>") or None
         self.image_id: Optional[int] = self.sp_model.piece_to_id("_<IMG>") or None
         self.infill_id: Optional[int] = self.sp_model.piece_to_id("_<INFILL>") or None
+        
+        logger.info(f"BREAK ID: {self.break_id} - IMG ID: {self.image_id} - INFILL ID: {self.infill_id}")
 
 
 
@@ -84,3 +86,40 @@ class Tokenizer:
     def decode_infilling(self, t: List[int]) -> str:
         """Decode a string without an implicit leading space."""
         return self.sp_model.decode([self.sp_model.piece_to_id("☺")] + t)[1:]
+    
+
+class CM3LeonTokenizer(Tokenizer):
+    def __init__(
+        self,
+        model_path: str
+    ):
+        super().__init__(model_path)
+        self.clip = CLIPQ(
+            model_path=model_path,
+            query_text="A photo of an image segment",
+        )
+    
+    def encode(
+        self,
+        s: str = None,
+        image: str = None,
+    ) -> List[Union[int, float]]:
+        #encode text
+        text = self.encode(
+            s,
+            bos=True,
+            eos=False,
+        )
+
+        #get embeds for img
+        img = self.clip.run_from_url(
+            url=image,
+            h_splits=3,
+            v_splits=3
+        )
+
+        #combine text, tokens and image embeddings
+        #starting with a <break> token followed by img embeds and ending with a eos token
+        seq = text + [self.break_id] + img + [self.eos_id]
+        return seq
+    
