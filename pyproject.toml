@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cm3"
-version = "0.1.9"
+version = "0.2.0"
 description = "Description of the cm3 package"
 authors = ["Your Name <youremail@example.com>"]
 license = "MIT"
