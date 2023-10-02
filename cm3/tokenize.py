@@ -1,71 +1,86 @@
-import multiprocessing 
-import argparse
-from itertools import chain
-from datasets import load_dataset
-from cm3.model import CM3LEONTokenizer
 
-class CFG:
-    SEED: int = 42
-    SEQ_LEN: int = 8192
-    NUM_CPU: int = multiprocessing.cpu_count()
-    HF_ACCOUNT_REPO: str = "YOUR HUGGINGFACE API KEY"
-    DATASET_NAME: str = "HuggingFaceM4/VQAv2"
+import os
+from logging import getLogger
+from typing import List, Optional
+
+from sentencepiece import SentencePieceProcessor
+
+logger = getLogger()
 
 
-#perhaps will need finetuning
-def built_dataset(args):
-    # tokenizer = AutoTokenizer.from_pretrained(CFG.TOKENIZER)
-    tokenizer = CM3LEONTokenizer.tokenize
-    
-    train_dataset = load_dataset(CFG.DATASET_NAME, split="train", streaming=True)
+class Tokenizer:
+    """
+    A SentencePieceTokenizer is a tokenizer that uses a pretrained SentencePiece model 
+    to convert text into tokens and vice versa. 
 
-    def tokenize_function(example):
-        return tokenizer([t + tokenizer.eos_token for t in example["text"]])
-    
-    tokenized_dataset = train_dataset.map(
-        tokenize_function,
-        batched=True,
-        num_proc=CFG.NUM_CPU,
-        remove_columns=["text"],
-    )
+    It includes the ability to add special tokens for infilling tasks and provides 
+    functionality to encode and decode text with or without implicit leading spaces.
 
-    block_size = CFG.SEQ_LEN
+    Parameters:
+    - model_path (str): Path to the pretrained SentencePiece model file.
 
+    Attributes:
+    - n_words (int): Vocabulary size of the SentencePiece model.
+    - bos_id (int): Token ID of the beginning-of-sentence (BOS) token.
+    - eos_id (int): Token ID of the end-of-sentence (EOS) token.
+    - pad_id (int): Token ID of the padding (PAD) token.
+    - prefix_id (int, optional): Token ID of the prefix token. Default: None.
+    - middle_id (int, optional): Token ID of the middle token. Default: None.
+    - suffix_id (int, optional): Token ID of the suffix token. Default: None.
+    - eot_id (int, optional): Token ID of the end-of-turn (EOT) token. Default: None.
+    """
+    def __init__(self, model_path: str):
+        # reload tokenizer
+        assert os.path.isfile(model_path), model_path
+        self.sp_model = SentencePieceProcessor(model_file=model_path)
+        logger.info(f"Reloaded SentencePiece model from {model_path}")
 
-    #main data processing functin that will concatenate all texts from our dataset
-    def group_texts(examples):
-        #concatenate all texts
-        concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
-        total_length = len(concatenated_examples[list(examples.keys())[0]])
+        # BOS / EOS token IDs
+        self.n_words: int = self.sp_model.vocab_size()
+        self.bos_id: int = self.sp_model.bos_id()
+        self.eos_id: int = self.sp_model.eos_id()
+        self.pad_id: int = self.sp_model.pad_id()
 
-        #drop the small remainder we could add padding if the model supported it instead of this drop customize
-        if total_length >= block_size:
-            total_length = (total_length // block_size) * block_size
+        # token IDs for special infilling tokens
+        self.prefix_id: Optional[int] = self.sp_model.piece_to_id("▁<PRE>") or None
+        self.middle_id: Optional[int] = self.sp_model.piece_to_id("▁<MID>") or None
+        self.suffix_id: Optional[int] = self.sp_model.piece_to_id("▁<SUF>") or None
+        self.eot_id: Optional[int] = self.sp_model.piece_to_id("▁<EOT>") or None
         
-        #split by chunks of max length
-        result = {
-            k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
-            for k, t in concatenated_examples.items()
-        }
-
-        return result
-    
-
-    train_tokenized_dataset = tokenized_dataset.map(
-        group_texts,
-        batched=True,
-        num_proc=CFG.NUM_PROC,
-    )
-
-    train_tokenized_dataset.push_to_hub(CFG.HF_ACCOUNT_REPO)
+        #generates text until a modality break token is detected => then img is sampled
+        self.break_id: Optional[int] = self.sp_model.piece_to_id("_<BREAK>") or None
+        self.image_id: Optional[int] = self.sp_model.piece_to_id("_<IMG>") or None
+        self.infill_id: Optional[int] = self.sp_model.piece_to_id("_<INFILL>") or None
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Process and push dataset to Hugging Face Hub")
-    parser.add_argument("--seed", type=int, default=CFG.SEED, help="Random seed")
-    parser.add_argument("--seq_len", type=int, default=CFG.SEQ_LEN, help="Sequence length for processing")
-    parser.add_argument("--hf_account", type=str, default=CFG.HF_ACCOUNT_REPO, help="Hugging Face account name and repo")
-    parser.add_argument("--tokenizer", type=str, default=CFG.TOKENIZER, help="Tokenizer model to use")
-    parser.add_argument("--dataset_name", type=str, default=CFG.DATASET_NAME, help="Name of the dataset to process")
-    args = parser.parse_args()
-    built_dataset(args)
+
+        logger.info(
+            f"#words: {self.n_words} - BOS ID: {self.bos_id} - EOS ID: {self.eos_id} "
+            f"- PRE ID: {self.prefix_id} - MID ID: {self.middle_id} - SUF ID: {self.suffix_id} - EOT ID: {self.eot_id}"
+        )
+        assert self.sp_model.vocab_size() == self.sp_model.get_piece_size()
+
+    def encode(
+        self, 
+        s: str, 
+        bos: bool, 
+        eos: bool
+    ) -> List[int]:
+        assert type(s) is str
+        t = self.sp_model.encode(s)
+        if bos:
+            t = [self.bos_id] + t
+        if eos:
+            t = t + [self.eos_id]
+        return t
+
+    def decode(self, t: List[int]) -> str:
+        return self.sp_model.decode(t)
+
+    def encode_infilling(self, s: str) -> List[int]:
+        """Encode a string without an implicit leading space."""
+        return self.sp_model.encode("☺" + s)[2:]
+
+    def decode_infilling(self, t: List[int]) -> str:
+        """Decode a string without an implicit leading space."""
+        return self.sp_model.decode([self.sp_model.piece_to_id("☺")] + t)[1:]
