@@ -36,15 +36,11 @@ from transformers import (
     get_linear_schedule_with_warmup,
     set_seed,
 )
-
-# import bitsandbytes as bnb
 from cm3.model import CM3LEON
 from cm3.utils.stable_adamw import StableAdamWUnfused
 
-# dist.init_process_group(backend='nccl') #init_method="env://")
 
 ###############
-
 class CFG:
     BATCH_SIZE = 3
     GRADIENT_ACCUMULATE_EVERY: int = 1
