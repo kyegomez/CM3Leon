@@ -111,28 +111,6 @@ class CM3(Module):
         loss = nn.NLLLoss()(log_probs, labels)
         return loss
 
-    # def forward(self, text_tokens, img, **kwargs):
-    #     try:
-    #         encoded_img = self.encoder(img, return_embeddings=True)
-
-    #         #mask and relocate image span in text tokens
-    #         text_tokens = self.mask_and_relocate(text_tokens)
-
-    #         #concat
-    #         context = torch.cat([encoded_img, text_tokens], dim=1)
-
-    #         #get log probs
-    #         log_probs = self.decoder(context, **kwargs)
-
-    #         #calculate cm3 loss
-    #         loss = self.cm3_loss(log_probs, text_tokens)
-
-    #         return loss
-    #         # return self.decoder(text_tokens, context=encoded_img)
-    #     except Exception as error:
-    #         print(f"Failed in forward method: {error}")
-    #         raise
-
     def forward(self, img, text):
         try:
             encoded = self.encoder(img, return_embeddings=True)
