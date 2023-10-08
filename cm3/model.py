@@ -11,11 +11,11 @@ from zeta.nn.architecture.transformer import (
     ViTransformerWrapper,
 )
 
+
 # logging
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 
 # main model
 class CM3(Module):
