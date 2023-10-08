@@ -184,8 +184,6 @@ If you encounter any issues or need further clarification, please create an issu
 
 CM3Leon is open-sourced under the [MIT license](LICENSE).
 
-
-
 # Roadmap
 
 * Implement Objective function where multi-modal inputs are transformed into an infilling instance by masking specific spans and relocating them to the end. 
@@ -196,8 +194,7 @@ CM3Leon is open-sourced under the [MIT license](LICENSE).
 
 * Implement Free Guidance CFG => directing an unconditional sample towards a conditional sample. Replace text with mask token from cm3 objective for uncoditional sampling so that during inference 2 concurrent tokens tsreams are generated a conditional stream, which is contigent on the input text and an unconditional token stream which is conditioned on a mask token Where
 
-``` 
-
+```python
 Logits, cond = T(ty | ty), logit.uncond = T(ty | <mask>)
 logits.cf = logits.uncond + a.c * (logits.cond - logits.uncond)
 
@@ -212,6 +209,5 @@ a.c = scaling factor
 ```
 V(t.y < .i) = {t.yi is in V: P.exp(t.yi | t.y<.i) >= a * kmax(p.exp(w|t.y<i))}
 ```
-
 
 # Citation
