@@ -95,22 +95,6 @@ class CM3(Module):
 
         self.decoder = AutoregressiveWrapper(self.transformer)
 
-    def mask_and_relocate(self, text_tokens):
-        # mask image span
-        text_tokens = text_tokens.masked_fill(
-            text_tokens == self.im_idx, self.mask_token
-        )
-
-        # relocate to end
-        image_span = text_tokens[text_tokens == self.im_end_idx].unsqueeze(1)
-        text_tokens = torch.cat([text_tokens, image_span], dim=1)
-        return text_tokens
-
-    def cm3_loss(self, log_probs, labels):
-        # cm3 loss prediction
-        loss = nn.NLLLoss()(log_probs, labels)
-        return loss
-
     def forward(self, img, text):
         try:
             encoded = self.encoder(img, return_embeddings=True)
