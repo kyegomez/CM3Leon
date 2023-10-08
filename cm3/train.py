@@ -55,7 +55,7 @@ class CFG:
     USE_ACTIVATION_CHECKPOINTING: bool = True
     RESUME_FROM_CHECKPOINT: str = False
     CHECKPOINTING_STEPS: int = 1000
-    OUTPUT_DIR: str = 'checkpoints/' # Folder
+    OUTPUT_DIR: str = "checkpoints/"  # Folder
     ENTITY_NAME: str = "CM3LEON"
 
 
@@ -86,8 +86,10 @@ def activation_checkpointing(
     """
     if accelerator is not None:
         accelerator.print("Using activation checkpointing")
+
     def check_fn(submodule):
         return isinstance(submodule, CM3LEON)
+
     non_reentrant_wrapper = partial(
         checkpoint_wrapper,
         offload_to_cpu=offload_to_cpu,
@@ -165,7 +167,7 @@ def fsdp(
         )
 
     if shard_strat == "SHARD_GRAD":
-        sharding_strat_fsdp = ShardingStrategy.SHARD_GRAD_OP 
+        sharding_strat_fsdp = ShardingStrategy.SHARD_GRAD_OP
     elif shard_strat == "FULL_SHARD":
         sharding_strat_fsdp = ShardingStrategy.FULL_SHARD
     elif shard_strat == "NO_SHARD":
@@ -360,14 +362,28 @@ def decoupled_optimizer(
 
     # Create a variable called optimizer that stores an instance of the optimizer.
     if optimizer_type == "lion":
-        optimizer = Lion(grouped_params, lr=learning_rate, betas=(beta_1, beta_2),)
+        optimizer = Lion(
+            grouped_params,
+            lr=learning_rate,
+            betas=(beta_1, beta_2),
+        )
     elif optimizer_type == "adamw":
-        optimizer = AdamW(grouped_params, lr=learning_rate, betas=(beta_1, beta_2),)
+        optimizer = AdamW(
+            grouped_params,
+            lr=learning_rate,
+            betas=(beta_1, beta_2),
+        )
     elif optimizer_type == "deepspeed":
-        optimizer = DummyOptim(grouped_params, lr=learning_rate, betas=(beta_1, beta_2),)
+        optimizer = DummyOptim(
+            grouped_params,
+            lr=learning_rate,
+            betas=(beta_1, beta_2),
+        )
     elif optimizer_type == "stable_adamw":
         optimizer = StableAdamWUnfused(
-            grouped_params, lr=learning_rate, betas=(beta_1, beta_2),
+            grouped_params,
+            lr=learning_rate,
+            betas=(beta_1, beta_2),
         )
     # elif optimizer_type=="Adam8bit":
     #     optimizer = bnb.optim.Adam8bit(grouped_params, lr=learning_rate, betas=(beta_1, beta_2))
@@ -382,7 +398,6 @@ def decoupled_optimizer(
 
     # Return the optimizer.
     return optimizer
-
 
 
 # dataloaders
@@ -430,12 +445,15 @@ def build_dataloaders():
         return result
 
     train_dataset = tokenized_dataset.map(
-        group_texts, batched=True, num_proc=CFG.NUM_CPU,
+        group_texts,
+        batched=True,
+        num_proc=CFG.NUM_CPU,
     )
 
     return train_dataset
 
-#switch to falconwebdataset
+
+# switch to falconwebdataset
 def build_pre_tokenized():
     d0 = load_dataset("conceptofmind/c4_0-to-20_neox_with_eos_8k", split="train[:10]")
     # d1 = load_dataset("conceptofmind/c4_21-to-40_neox_with_eos_8k", split="train")
@@ -444,7 +462,6 @@ def build_pre_tokenized():
     # d4 = load_dataset("conceptofmind/c4_81-to-100_neox_with_eos_8k", split="train")
     # train_dataset = concatenate_datasets([d0, d1, d2, d3, d4])
     return d0
-
 
 
 def Train():
@@ -459,7 +476,6 @@ def Train():
         kwargs_handlers=[timeout],
     )
     # AcceleratorState().deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] = 4 #??????
-
 
     accelerator.init_trackers(
         project_name="CM3LEON",
@@ -483,11 +499,7 @@ def Train():
     print_num_params(model, accelerator)
 
     if CFG.USE_FSDP:
-        model = fsdp(
-            model,
-            mp="fp16",
-            shard_strat="SHARD_GRAD"
-        )
+        model = fsdp(model, mp="fp16", shard_strat="SHARD_GRAD")
 
     if CFG.USE_ACTIVATION_CHECKPOINTING:
         activation_checkpointing(model, accelerator)
@@ -502,7 +514,9 @@ def Train():
         train_dataset = build_dataloaders()
 
     train_loader = DataLoader(
-        train_dataset, batch_size=CFG.BATCH_SIZE, collate_fn=default_data_collator,
+        train_dataset,
+        batch_size=CFG.BATCH_SIZE,
+        collate_fn=default_data_collator,
     )
 
     model = accelerator.prepare(model, train_loader)
@@ -510,13 +524,13 @@ def Train():
     # optimizer
     optim = decoupled_optimizer(
         model=model,
-        learning_rate=CFG.LEARNING_RATE, 
-        weight_decay=CFG.WEIGHT_DECAY, 
-        beta_1=0.90, 
-        beta_2=0.95, 
-        optimizer_type='stable_adamw',  
+        learning_rate=CFG.LEARNING_RATE,
+        weight_decay=CFG.WEIGHT_DECAY,
+        beta_1=0.90,
+        beta_2=0.95,
+        optimizer_type="stable_adamw",
         use_fsdp=True,
-        accelerator=accelerator
+        accelerator=accelerator,
     )
 
     # Determine number of training steps
@@ -531,9 +545,9 @@ def Train():
 
     if CFG.USE_DEEPSPEED:
         lr_scheduler = DummyScheduler(
-            optim, 
-            total_num_steps=max_train_steps * accelerator.num_processes, 
-            warmup_num_steps=NUM_WARMUP_STEPS
+            optim,
+            total_num_steps=max_train_steps * accelerator.num_processes,
+            warmup_num_steps=NUM_WARMUP_STEPS,
         )
     else:
         lr_scheduler = get_lr_scheduler_with_warmup(
@@ -641,19 +655,21 @@ def Train():
 
 
 def main():
-    os.environ['MASTER_ADDR'] #'localhost'
-    os.environ['MASTER_PORT'] #= '9994'
-    
+    os.environ["MASTER_ADDR"]  #'localhost'
+    os.environ["MASTER_PORT"]  # = '9994'
+
     # # [CRITICAL] Pay attention to this when scaling to multiple GPUs and clusters
-    
+
     # # Pay attention to this, use "accelerate config"
 
-    os.environ['RANK']       #= str(0) # Number of nodes (servers)
-    os.environ['WORLD_SIZE'] # = str(torch.cuda.device_count())
+    os.environ["RANK"]  # = str(0) # Number of nodes (servers)
+    os.environ["WORLD_SIZE"]  # = str(torch.cuda.device_count())
 
-    dist.init_process_group(backend='nccl') #init_method="env://")
-    
+    dist.init_process_group(backend="nccl")  # init_method="env://")
+
     Train()
+
+
 #
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

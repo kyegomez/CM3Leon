@@ -11,14 +11,16 @@ from zeta.nn.architecture.transformer import (
     ViTransformerWrapper,
 )
 
-#logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# logging
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
-#main model
+# main model
 class CM3(Module):
     """
-    Andromeda is a transformer-based model architecture. It initializes with 
+    Andromeda is a transformer-based model architecture. It initializes with
     a Transformer and AutoregressiveWrapper with default or user-specified parameters.
 
     Initialize the model with specified or default parameters.
@@ -41,37 +43,33 @@ class CM3(Module):
         - attn_qk_norm: Attention query-key normalization
         - attn_qk_norm_dim_scale: Attention query-key normalization dimension scale
     """
+
     def __init__(
-            self, 
-            num_tokens=50432, 
-            max_seq_len=8192, 
-            dim=2560, 
-            depth=32, 
-            dim_head=128, 
-            heads=24,
-            use_abs_pos_emb=False, 
-            alibi_pos_bias=True, 
-            alibi_num_heads=12, 
-            rotary_xpos=True,
-            attn_flash=True, 
-            image_size=256,
-            patch_size=32,
-            attn_one_kv_head=True,  # multiquery attention
-            qk_norm=True, 
-            attn_qk_norm=True, 
-            attn_qk_norm_dim_scale=True, 
-        ):
+        self,
+        num_tokens=50432,
+        max_seq_len=8192,
+        dim=2560,
+        depth=32,
+        dim_head=128,
+        heads=24,
+        use_abs_pos_emb=False,
+        alibi_pos_bias=True,
+        alibi_num_heads=12,
+        rotary_xpos=True,
+        attn_flash=True,
+        image_size=256,
+        patch_size=32,
+        attn_one_kv_head=True,  # multiquery attention
+        qk_norm=True,
+        attn_qk_norm=True,
+        attn_qk_norm_dim_scale=True,
+    ):
         super().__init__()
 
         self.encoder = ViTransformerWrapper(
             image_size=image_size,
             patch_size=patch_size,
-            attn_layers=Encoder(
-                dim=dim,
-                depth=depth,
-                dim_head=dim_head,
-                heads=heads
-            )
+            attn_layers=Encoder(dim=dim, depth=depth, dim_head=dim_head, heads=heads),
         )
 
         self.transformer = Transformer(
@@ -91,30 +89,32 @@ class CM3(Module):
                 # qk_norm=qk_norm,
                 # attn_qk_norm=attn_qk_norm,
                 # attn_qk_norm_dim_scale=attn_qk_norm_dim_scale,
-                cross_attend=True
-            )
+                cross_attend=True,
+            ),
         )
 
         self.decoder = AutoregressiveWrapper(self.transformer)
 
     def mask_and_relocate(self, text_tokens):
-        #mask image span
-        text_tokens = text_tokens.masked_fill(text_tokens==self.im_idx, self.mask_token)
+        # mask image span
+        text_tokens = text_tokens.masked_fill(
+            text_tokens == self.im_idx, self.mask_token
+        )
 
-        #relocate to end
-        image_span = text_tokens[text_tokens==self.im_end_idx].unsqueeze(1)
+        # relocate to end
+        image_span = text_tokens[text_tokens == self.im_end_idx].unsqueeze(1)
         text_tokens = torch.cat([text_tokens, image_span], dim=1)
         return text_tokens
-    
+
     def cm3_loss(self, log_probs, labels):
-        #cm3 loss prediction
+        # cm3 loss prediction
         loss = nn.NLLLoss()(log_probs, labels)
         return loss
 
     # def forward(self, text_tokens, img, **kwargs):
     #     try:
     #         encoded_img = self.encoder(img, return_embeddings=True)
-            
+
     #         #mask and relocate image span in text tokens
     #         text_tokens = self.mask_and_relocate(text_tokens)
 
@@ -134,10 +134,9 @@ class CM3(Module):
     #         raise
 
     def forward(self, img, text):
-        try:    
+        try:
             encoded = self.encoder(img, return_embeddings=True)
             return self.decoder(text, context=encoded)
         except Exception as error:
             print(f"Failed in forward method: {error}")
             raise
-

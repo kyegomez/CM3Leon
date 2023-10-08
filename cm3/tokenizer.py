@@ -10,10 +10,10 @@ logger = getLogger()
 
 class Tokenizer:
     """
-    A SentencePieceTokenizer is a tokenizer that uses a pretrained SentencePiece model 
-    to convert text into tokens and vice versa. 
+    A SentencePieceTokenizer is a tokenizer that uses a pretrained SentencePiece model
+    to convert text into tokens and vice versa.
 
-    It includes the ability to add special tokens for infilling tasks and provides 
+    It includes the ability to add special tokens for infilling tasks and provides
     functionality to encode and decode text with or without implicit leading spaces.
 
     Parameters:
@@ -32,6 +32,7 @@ class Tokenizer:
 
 
     """
+
     def __init__(self, model_path: str):
         # reload tokenizer
         assert os.path.isfile(model_path), model_path
@@ -49,15 +50,15 @@ class Tokenizer:
         self.middle_id: Optional[int] = self.sp_model.piece_to_id("▁<MID>") or None
         self.suffix_id: Optional[int] = self.sp_model.piece_to_id("▁<SUF>") or None
         self.eot_id: Optional[int] = self.sp_model.piece_to_id("▁<EOT>") or None
-        
-        #generates text until a modality break token is detected => then img is sampled
+
+        # generates text until a modality break token is detected => then img is sampled
         self.break_id: Optional[int] = self.sp_model.piece_to_id("_<BREAK>") or None
         self.image_id: Optional[int] = self.sp_model.piece_to_id("_<IMG>") or None
         self.infill_id: Optional[int] = self.sp_model.piece_to_id("_<INFILL>") or None
-        
-        logger.info(f"BREAK ID: {self.break_id} - IMG ID: {self.image_id} - INFILL ID: {self.infill_id}")
 
-
+        logger.info(
+            f"BREAK ID: {self.break_id} - IMG ID: {self.image_id} - INFILL ID: {self.infill_id}"
+        )
 
         logger.info(
             f"#words: {self.n_words} - BOS ID: {self.bos_id} - EOS ID: {self.eos_id} "
@@ -65,12 +66,7 @@ class Tokenizer:
         )
         assert self.sp_model.vocab_size() == self.sp_model.get_piece_size()
 
-    def encode(
-        self, 
-        s: str, 
-        bos: bool, 
-        eos: bool
-    ) -> List[int]:
+    def encode(self, s: str, bos: bool, eos: bool) -> List[int]:
         assert type(s) is str
         t = self.sp_model.encode(s)
         if bos:
@@ -89,7 +85,7 @@ class Tokenizer:
     def decode_infilling(self, t: List[int]) -> str:
         """Decode a string without an implicit leading space."""
         return self.sp_model.decode([self.sp_model.piece_to_id("☺")] + t)[1:]
-    
+
 
 # class CM3LeonTokenizer(Tokenizer):
 #     """
@@ -127,7 +123,7 @@ class Tokenizer:
 #             model_path=model_path,
 #             query_text="A photo of an image segment",
 #         )
-    
+
 #     def encode(
 #         self,
 #         s: str = None,
@@ -149,9 +145,8 @@ class Tokenizer:
 #         )
 
 #         #combine text, tokens and image embeddings
-#         #starting with a <break> token followed by img embeds 
+#         #starting with a <break> token followed by img embeds
 #         # and ending with a eos token
 
 #         seq = text + [self.break_id] + img + [self.eos_id]
 #         return seq
-    
