@@ -3,8 +3,8 @@ import logging
 import torch
 from torch import nn
 from torch.nn import Module
-from zeta.nn.architecture.auto_regressive_wrapper import AutoregressiveWrapper
-from zeta.nn.architecture.transformer import (
+from zeta.structs.auto_regressive_wrapper import AutoregressiveWrapper
+from zeta.structs.transformer import (
     Decoder,
     Encoder,
     Transformer,
@@ -16,6 +16,7 @@ from zeta.nn.architecture.transformer import (
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
 
 # main model
 class CM3(Module):
