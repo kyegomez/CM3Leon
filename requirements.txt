@@ -17,3 +17,5 @@ memory-profiler
 zetascale
 clipq
 classifier-free-guidance-pytorch
+
+git+https://github.com/Qiyuan-Ge/PaintMind.git

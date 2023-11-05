@@ -1,7 +1,7 @@
 [![Multi-Modality](agorabanner.png)](https://discord.gg/qUtxnK2NMf)
 
 
-# CM3Leon: Autoregressive Multi-Modal Model for Text and Image Generation
+# CM3Leon: Autoregressive Multi-Modal Model for Text and Image Generation (wip)
 
 [![GitHub issues](https://img.shields.io/github/issues/kyegomez/CM3Leon)](https://github.com/kyegomez/CM3Leon/issues) 
 [![GitHub forks](https://img.shields.io/github/forks/kyegomez/CM3Leon)](https://github.com/kyegomez/CM3Leon/network) 
@@ -21,8 +21,7 @@ CM3Leon is a transformer-based autoregressive model designed for multi-modal tas
 [CM3LEON, PAPER LINK](https://ai.meta.com/research/publications/scaling-autoregressive-multi-modal-models-pretraining-and-instruction-tuning/)
 
 * Please Help with this open source implementation in the Agora discord, ![Discord](https://img.shields.io/discord/999382051935506503)
-
-
+* This implementation is still not finished.
 
 ## Install
 

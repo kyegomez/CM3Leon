@@ -1,7 +1,5 @@
 import logging
 
-import torch
-from torch import nn
 from torch.nn import Module
 from zeta.structs.auto_regressive_wrapper import AutoregressiveWrapper
 from zeta.structs.transformer import (
@@ -103,3 +101,9 @@ class CM3(Module):
         except Exception as error:
             print(f"Failed in forward method: {error}")
             raise
+
+    def generate(self, text, seq):
+        text = text[:, None, ...]
+        return self.decoder.generate(text, seq)
+    
+        
