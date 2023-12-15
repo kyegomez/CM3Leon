@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "cm3"
-version = "0.2.5"
+version = "0.2.6"
 description = "Description of the cm3 package"
-authors = ["Kye Gomez kye@apac.ai"]
+authors = ["Kye Gomez <kye@apac.ai>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
@@ -20,7 +20,6 @@ triton = "*"
 deepspeed = "*"
 memory-profiler = "*"
 zetascale = "*"
-clipq = "*"
 classifier-free-guidance-pytorch = "*"
 
 [[tool.poetry.source]]
